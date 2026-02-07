@@ -47,6 +47,7 @@ class AppState: ObservableObject {
     @AppStorage("hasCompletedOnboarding") var hasCompletedOnboarding: Bool = false
     @AppStorage("enableDryRun") var enableDryRun: Bool = true
     @AppStorage("showHiddenFiles") var showHiddenFiles: Bool = false
+    @AppStorage("showMenuBarIcon") var showMenuBarIcon: Bool = true
 
     private var cancellables = Set<AnyCancellable>()
 

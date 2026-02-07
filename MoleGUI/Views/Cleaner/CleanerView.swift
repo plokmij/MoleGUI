@@ -2,7 +2,7 @@ import SwiftUI
 
 struct CleanerView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var viewModel = CleanerViewModel()
+    @ObservedObject private var viewModel = ViewModelContainer.shared.cleanerViewModel
     @State private var showDryRunResult = false
 
     var body: some View {
@@ -45,6 +45,7 @@ struct CleanerView: View {
                 CleanerResultsView(viewModel: viewModel)
             }
         }
+        .background(Color(nsColor: .windowBackgroundColor))
         .toolbar {
             ToolbarItemGroup(placement: .automatic) {
                 if !viewModel.results.isEmpty {

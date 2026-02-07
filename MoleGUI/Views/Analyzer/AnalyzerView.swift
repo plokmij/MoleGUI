@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct AnalyzerView: View {
-    @StateObject private var viewModel = AnalyzerViewModel()
+    @ObservedObject private var viewModel = ViewModelContainer.shared.analyzerViewModel
 
     var body: some View {
         VStack(spacing: 0) {
@@ -88,6 +88,7 @@ struct AnalyzerView: View {
             }
 
         }
+        .background(Color(nsColor: .windowBackgroundColor))
         .toolbar {
             ToolbarItemGroup(placement: .navigation) {
                 if viewModel.rootItem != nil {

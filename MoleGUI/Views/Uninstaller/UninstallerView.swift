@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UninstallerView: View {
-    @ObservedObject private var viewModel = ViewModelContainer.shared.uninstallerViewModel
+    @StateObject private var viewModel = UninstallerViewModel()
 
     var body: some View {
         HSplitView {

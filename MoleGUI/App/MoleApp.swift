@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct MoleApp: App {
+    @NSApplicationDelegateAdaptor(AppDelegate.self) var appDelegate
     @StateObject private var appState = AppState()
 
     var body: some Scene {
@@ -9,6 +10,11 @@ struct MoleApp: App {
             ContentView()
                 .environmentObject(appState)
                 .frame(minWidth: 900, minHeight: 600)
+                .onReceive(NotificationCenter.default.publisher(for: .menuBarNavigateToTab)) { notification in
+                    if let tab = notification.userInfo?["tab"] as? NavigationTab {
+                        appState.selectedTab = tab
+                    }
+                }
         }
         .windowToolbarStyle(.unified)
         .commands {

@@ -3,7 +3,7 @@ import Charts
 
 struct DashboardView: View {
     @EnvironmentObject var appState: AppState
-    @StateObject private var monitorVM = MonitorViewModel()
+    @ObservedObject private var monitorVM = ViewModelContainer.shared.monitorViewModel
 
     var body: some View {
         ScrollView {
@@ -216,6 +216,7 @@ struct QuickStatCard: View {
                         .tint(color)
                 }
             }
+            .frame(minHeight: 80)
         } label: {
             Label(title, systemImage: icon)
                 .foregroundStyle(color)

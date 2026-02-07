@@ -2,7 +2,7 @@ import SwiftUI
 import Charts
 
 struct MonitorView: View {
-    @StateObject private var viewModel = MonitorViewModel()
+    @ObservedObject private var viewModel = ViewModelContainer.shared.monitorViewModel
 
     var body: some View {
         ScrollView {

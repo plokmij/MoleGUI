@@ -27,6 +27,7 @@ struct SettingsView: View {
                     Label("About", systemImage: "info.circle")
                 }
         }
+        .background(Color(nsColor: .windowBackgroundColor))
         .frame(minWidth: 450, minHeight: 300)
     }
 }
@@ -35,6 +36,7 @@ struct GeneralSettingsView: View {
     @EnvironmentObject var appState: AppState
     @AppStorage("launchAtLogin") private var launchAtLogin = false
     @AppStorage("checkForUpdates") private var checkForUpdates = true
+    @AppStorage("showMenuBarIcon") private var showMenuBarIcon = true
 
     var body: some View {
         Form {
@@ -42,6 +44,8 @@ struct GeneralSettingsView: View {
                 Toggle("Launch at login", isOn: $launchAtLogin)
 
                 Toggle("Check for updates automatically", isOn: $checkForUpdates)
+
+                Toggle("Show menu bar icon", isOn: $showMenuBarIcon)
             }
 
             Section {

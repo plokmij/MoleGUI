@@ -9,6 +9,9 @@
 /* Begin PBXBuildFile section */
 		AAA00001 /* MoleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00001; };
 		AAA00002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00002; };
+		AAA00033 /* ViewModelContainer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00033; };
+		AAA00034 /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00034; };
+		AAA00035 /* MenuBarController.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00035; };
 		AAA00003 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00003; };
 		AAA00004 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00004; };
 		AAA00005 /* CleanerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00005; };
@@ -74,6 +77,9 @@
 		BBB00030 /* Whitelist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Whitelist.swift; sourceTree = "<group>"; };
 		BBB00031 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BBB00032 /* MoleGUI.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MoleGUI.entitlements; sourceTree = "<group>"; };
+		BBB00033 /* ViewModelContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelContainer.swift; sourceTree = "<group>"; };
+		BBB00034 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
+		BBB00035 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -116,6 +122,9 @@
 			children = (
 				BBB00001 /* MoleApp.swift */,
 				BBB00002 /* AppState.swift */,
+				BBB00033 /* ViewModelContainer.swift */,
+				BBB00034 /* AppDelegate.swift */,
+				BBB00035 /* MenuBarController.swift */,
 			);
 			path = App;
 			sourceTree = "<group>";
@@ -369,6 +378,9 @@
 				AAA00028 /* CachePaths.swift in Sources */,
 				AAA00029 /* AppRemnantPaths.swift in Sources */,
 				AAA00030 /* Whitelist.swift in Sources */,
+				AAA00033 /* ViewModelContainer.swift in Sources */,
+				AAA00034 /* AppDelegate.swift in Sources */,
+				AAA00035 /* MenuBarController.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

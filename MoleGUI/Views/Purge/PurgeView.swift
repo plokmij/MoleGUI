@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct PurgeView: View {
-    @StateObject private var viewModel = PurgeViewModel()
+    @ObservedObject private var viewModel = ViewModelContainer.shared.purgeViewModel
 
     var body: some View {
         VStack(spacing: 0) {
@@ -79,6 +79,7 @@ struct PurgeView: View {
                 PurgeResultsView(viewModel: viewModel)
             }
         }
+        .background(Color(nsColor: .windowBackgroundColor))
         .toolbar {
             ToolbarItemGroup(placement: .automatic) {
                 if !viewModel.artifacts.isEmpty {
