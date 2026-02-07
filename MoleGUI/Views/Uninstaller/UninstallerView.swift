@@ -1,7 +1,7 @@
 import SwiftUI
 
 struct UninstallerView: View {
-    @StateObject private var viewModel = UninstallerViewModel()
+    @ObservedObject private var viewModel = ViewModelContainer.shared.uninstallerViewModel
 
     var body: some View {
         HSplitView {
@@ -45,6 +45,20 @@ struct UninstallerView: View {
         .searchable(text: $viewModel.searchText, prompt: "Search apps...")
         .toolbar {
             ToolbarItem(placement: .automatic) {
+                if !viewModel.filteredApps.isEmpty {
+                    Button {
+                        if viewModel.allVisibleSelected {
+                            viewModel.deselectAllApps()
+                        } else {
+                            viewModel.selectAllApps()
+                        }
+                    } label: {
+                        Text(viewModel.allVisibleSelected ? "Deselect All" : "Select All")
+                    }
+                }
+            }
+
+            ToolbarItem(placement: .automatic) {
                 Picker("Sort", selection: $viewModel.sortOrder) {
                     ForEach(UninstallerViewModel.SortOrder.allCases, id: \.self) { order in
                         Text(order.rawValue).tag(order)
@@ -71,6 +85,19 @@ struct UninstallerView: View {
                 Text("This will move \(app.name) and \(app.remnants.count) related items to Trash.")
             }
         }
+        .alert("Uninstall \(viewModel.selectedAppIds.count) apps?", isPresented: $viewModel.showBulkConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Remove Apps Only") {
+                viewModel.uninstallSelectedApps(includeRemnants: false)
+            }
+            Button("Remove All", role: .destructive) {
+                viewModel.uninstallSelectedApps(includeRemnants: true)
+            }
+        } message: {
+            let apps = viewModel.selectedAppsForDeletion
+            let totalRemnants = apps.reduce(0) { $0 + $1.remnants.count }
+            Text("This will move \(apps.count) apps and \(totalRemnants) related items (\(ByteFormatter.format(viewModel.selectedTotalSize))) to Trash.")
+        }
         .alert("Error", isPresented: .constant(viewModel.error != nil)) {
             Button("OK") {
                 viewModel.error = nil
@@ -85,26 +112,76 @@ struct AppListView: View {
     @ObservedObject var viewModel: UninstallerViewModel
 
     var body: some View {
-        List(viewModel.filteredApps, selection: Binding(
-            get: { viewModel.selectedApp?.id },
-            set: { id in
-                if let id = id, let app = viewModel.filteredApps.first(where: { $0.id == id }) {
-                    viewModel.selectApp(app)
+        VStack(spacing: 0) {
+            List(viewModel.filteredApps, selection: Binding(
+                get: { viewModel.selectedApp?.id },
+                set: { id in
+                    if let id = id, let app = viewModel.filteredApps.first(where: { $0.id == id }) {
+                        viewModel.selectApp(app)
+                    }
                 }
-            }
-        )) { app in
-            AppRow(app: app)
+            )) { app in
+                AppRow(app: app, isSelected: viewModel.isAppSelected(app)) {
+                    viewModel.toggleAppSelection(app)
+                }
                 .tag(app.id)
+            }
+            .listStyle(.inset)
+
+            // Bulk action footer
+            if viewModel.hasSelection {
+                BulkActionFooter(viewModel: viewModel)
+            }
         }
-        .listStyle(.inset)
+    }
+}
+
+struct BulkActionFooter: View {
+    @ObservedObject var viewModel: UninstallerViewModel
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Divider()
+            HStack {
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("\(viewModel.selectedAppIds.count) selected")
+                        .fontWeight(.medium)
+                    Text(ByteFormatter.format(viewModel.selectedTotalSize))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+
+                Spacer()
+
+                Button(role: .destructive) {
+                    viewModel.confirmBulkUninstall()
+                } label: {
+                    Label("Delete Selected", systemImage: "trash")
+                }
+                .buttonStyle(.borderedProminent)
+                .tint(.red)
+                .disabled(viewModel.isUninstalling)
+            }
+            .padding()
+            .background(.bar)
+        }
     }
 }
 
 struct AppRow: View {
     let app: InstalledApp
+    let isSelected: Bool
+    let onToggle: () -> Void
 
     var body: some View {
         HStack(spacing: 12) {
+            Toggle("", isOn: Binding(
+                get: { isSelected },
+                set: { _ in onToggle() }
+            ))
+            .toggleStyle(.checkbox)
+            .labelsHidden()
+
             if let icon = app.icon {
                 Image(nsImage: icon)
                     .resizable()

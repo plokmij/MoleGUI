@@ -14,6 +14,10 @@ class UninstallerViewModel: ObservableObject {
     @Published var error: String?
     @Published var showConfirmation = false
 
+    // Multi-select state
+    @Published var selectedAppIds: Set<UUID> = []
+    @Published var showBulkConfirmation = false
+
     private let analyzer = AppBundleAnalyzer()
 
     enum SortOrder: String, CaseIterable {
@@ -48,6 +52,90 @@ class UninstallerViewModel: ObservableObject {
         apps.reduce(0) { $0 + $1.totalSize }
     }
 
+    // MARK: - Multi-select computed properties
+
+    var selectedAppsForDeletion: [InstalledApp] {
+        apps.filter { selectedAppIds.contains($0.id) }
+    }
+
+    var selectedTotalSize: Int64 {
+        selectedAppsForDeletion.reduce(0) { $0 + $1.totalSize }
+    }
+
+    var hasSelection: Bool {
+        !selectedAppIds.isEmpty
+    }
+
+    var allVisibleSelected: Bool {
+        !filteredApps.isEmpty && filteredApps.allSatisfy { selectedAppIds.contains($0.id) }
+    }
+
+    // MARK: - Multi-select methods
+
+    func toggleAppSelection(_ app: InstalledApp) {
+        if selectedAppIds.contains(app.id) {
+            selectedAppIds.remove(app.id)
+        } else {
+            selectedAppIds.insert(app.id)
+        }
+    }
+
+    func isAppSelected(_ app: InstalledApp) -> Bool {
+        selectedAppIds.contains(app.id)
+    }
+
+    func selectAllApps() {
+        for app in filteredApps {
+            selectedAppIds.insert(app.id)
+        }
+    }
+
+    func deselectAllApps() {
+        selectedAppIds.removeAll()
+    }
+
+    func confirmBulkUninstall() {
+        guard hasSelection else { return }
+        showBulkConfirmation = true
+    }
+
+    func uninstallSelectedApps(includeRemnants: Bool = true) {
+        guard hasSelection else { return }
+        guard !isUninstalling else { return }
+
+        isUninstalling = true
+        showBulkConfirmation = false
+        error = nil
+
+        let appsToDelete = selectedAppsForDeletion
+
+        Task {
+            var failedApps: [String] = []
+
+            for app in appsToDelete {
+                do {
+                    _ = try await analyzer.uninstallApp(app, includeRemnants: includeRemnants)
+                    // Remove from list on success
+                    apps.removeAll { $0.id == app.id }
+                    selectedAppIds.remove(app.id)
+                } catch {
+                    failedApps.append(app.name)
+                }
+            }
+
+            isUninstalling = false
+
+            if !failedApps.isEmpty {
+                self.error = "Failed to uninstall: \(failedApps.joined(separator: ", "))"
+            }
+
+            // Clear single selection if it was deleted
+            if let selected = selectedApp, !apps.contains(where: { $0.id == selected.id }) {
+                selectedApp = nil
+            }
+        }
+    }
+
     func startScan() {
         guard !isScanning else { return }
 
@@ -57,6 +145,7 @@ class UninstallerViewModel: ObservableObject {
         apps = []
         error = nil
         selectedApp = nil
+        selectedAppIds.removeAll()
 
         Task {
             do {
