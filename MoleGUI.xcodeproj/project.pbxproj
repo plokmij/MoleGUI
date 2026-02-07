@@ -1,0 +1,574 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		AAA00001 /* MoleApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00001; };
+		AAA00002 /* AppState.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00002; };
+		AAA00003 /* SidebarView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00003; };
+		AAA00004 /* DashboardView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00004; };
+		AAA00005 /* CleanerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00005; };
+		AAA00006 /* UninstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00006; };
+		AAA00007 /* AnalyzerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00007; };
+		AAA00008 /* MonitorView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00008; };
+		AAA00009 /* PurgeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00009; };
+		AAA00010 /* SettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00010; };
+		AAA00011 /* CleanerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00011; };
+		AAA00012 /* UninstallerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00012; };
+		AAA00013 /* AnalyzerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00013; };
+		AAA00014 /* MonitorViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00014; };
+		AAA00015 /* PurgeViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00015; };
+		AAA00016 /* FileScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00016; };
+		AAA00017 /* CacheManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00017; };
+		AAA00018 /* AppBundleAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00018; };
+		AAA00019 /* DiskAnalyzer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00019; };
+		AAA00020 /* SystemMonitor.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00020; };
+		AAA00021 /* TrashManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00021; };
+		AAA00022 /* CacheItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00022; };
+		AAA00023 /* InstalledApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00023; };
+		AAA00024 /* DiskItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00024; };
+		AAA00025 /* SystemStats.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00025; };
+		AAA00026 /* ProjectArtifact.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00026; };
+		AAA00027 /* ByteFormatter.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00027; };
+		AAA00028 /* CachePaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00028; };
+		AAA00029 /* AppRemnantPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00029; };
+		AAA00030 /* Whitelist.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00030; };
+		AAA00031 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBB00031; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		BBB00000 /* MoleGUI.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = MoleGUI.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BBB00001 /* MoleApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MoleApp.swift; sourceTree = "<group>"; };
+		BBB00002 /* AppState.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppState.swift; sourceTree = "<group>"; };
+		BBB00003 /* SidebarView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SidebarView.swift; sourceTree = "<group>"; };
+		BBB00004 /* DashboardView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DashboardView.swift; sourceTree = "<group>"; };
+		BBB00005 /* CleanerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerView.swift; sourceTree = "<group>"; };
+		BBB00006 /* UninstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UninstallerView.swift; sourceTree = "<group>"; };
+		BBB00007 /* AnalyzerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzerView.swift; sourceTree = "<group>"; };
+		BBB00008 /* MonitorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorView.swift; sourceTree = "<group>"; };
+		BBB00009 /* PurgeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurgeView.swift; sourceTree = "<group>"; };
+		BBB00010 /* SettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SettingsView.swift; sourceTree = "<group>"; };
+		BBB00011 /* CleanerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CleanerViewModel.swift; sourceTree = "<group>"; };
+		BBB00012 /* UninstallerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = UninstallerViewModel.swift; sourceTree = "<group>"; };
+		BBB00013 /* AnalyzerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AnalyzerViewModel.swift; sourceTree = "<group>"; };
+		BBB00014 /* MonitorViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MonitorViewModel.swift; sourceTree = "<group>"; };
+		BBB00015 /* PurgeViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PurgeViewModel.swift; sourceTree = "<group>"; };
+		BBB00016 /* FileScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FileScanner.swift; sourceTree = "<group>"; };
+		BBB00017 /* CacheManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheManager.swift; sourceTree = "<group>"; };
+		BBB00018 /* AppBundleAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppBundleAnalyzer.swift; sourceTree = "<group>"; };
+		BBB00019 /* DiskAnalyzer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskAnalyzer.swift; sourceTree = "<group>"; };
+		BBB00020 /* SystemMonitor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemMonitor.swift; sourceTree = "<group>"; };
+		BBB00021 /* TrashManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TrashManager.swift; sourceTree = "<group>"; };
+		BBB00022 /* CacheItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CacheItem.swift; sourceTree = "<group>"; };
+		BBB00023 /* InstalledApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstalledApp.swift; sourceTree = "<group>"; };
+		BBB00024 /* DiskItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DiskItem.swift; sourceTree = "<group>"; };
+		BBB00025 /* SystemStats.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemStats.swift; sourceTree = "<group>"; };
+		BBB00026 /* ProjectArtifact.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProjectArtifact.swift; sourceTree = "<group>"; };
+		BBB00027 /* ByteFormatter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ByteFormatter.swift; sourceTree = "<group>"; };
+		BBB00028 /* CachePaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CachePaths.swift; sourceTree = "<group>"; };
+		BBB00029 /* AppRemnantPaths.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRemnantPaths.swift; sourceTree = "<group>"; };
+		BBB00030 /* Whitelist.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Whitelist.swift; sourceTree = "<group>"; };
+		BBB00031 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		BBB00032 /* MoleGUI.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = MoleGUI.entitlements; sourceTree = "<group>"; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		CCC00001 /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		DDD00000 = {
+			isa = PBXGroup;
+			children = (
+				DDD00001 /* MoleGUI */,
+				DDD00099 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		DDD00001 /* MoleGUI */ = {
+			isa = PBXGroup;
+			children = (
+				DDD00002 /* App */,
+				DDD00003 /* Views */,
+				DDD00010 /* ViewModels */,
+				DDD00011 /* Services */,
+				DDD00012 /* Models */,
+				DDD00013 /* Helpers */,
+				DDD00014 /* Config */,
+				DDD00015 /* Resources */,
+				BBB00032 /* MoleGUI.entitlements */,
+			);
+			path = MoleGUI;
+			sourceTree = "<group>";
+		};
+		DDD00002 /* App */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00001 /* MoleApp.swift */,
+				BBB00002 /* AppState.swift */,
+			);
+			path = App;
+			sourceTree = "<group>";
+		};
+		DDD00003 /* Views */ = {
+			isa = PBXGroup;
+			children = (
+				DDD00004 /* Sidebar */,
+				DDD00005 /* Dashboard */,
+				DDD00006 /* Cleaner */,
+				DDD00007 /* Uninstaller */,
+				DDD00008 /* Analyzer */,
+				DDD00009 /* Monitor */,
+				DDD00016 /* Purge */,
+				DDD00017 /* Settings */,
+			);
+			path = Views;
+			sourceTree = "<group>";
+		};
+		DDD00004 /* Sidebar */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00003 /* SidebarView.swift */,
+			);
+			path = Sidebar;
+			sourceTree = "<group>";
+		};
+		DDD00005 /* Dashboard */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00004 /* DashboardView.swift */,
+			);
+			path = Dashboard;
+			sourceTree = "<group>";
+		};
+		DDD00006 /* Cleaner */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00005 /* CleanerView.swift */,
+			);
+			path = Cleaner;
+			sourceTree = "<group>";
+		};
+		DDD00007 /* Uninstaller */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00006 /* UninstallerView.swift */,
+			);
+			path = Uninstaller;
+			sourceTree = "<group>";
+		};
+		DDD00008 /* Analyzer */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00007 /* AnalyzerView.swift */,
+			);
+			path = Analyzer;
+			sourceTree = "<group>";
+		};
+		DDD00009 /* Monitor */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00008 /* MonitorView.swift */,
+			);
+			path = Monitor;
+			sourceTree = "<group>";
+		};
+		DDD00010 /* ViewModels */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00011 /* CleanerViewModel.swift */,
+				BBB00012 /* UninstallerViewModel.swift */,
+				BBB00013 /* AnalyzerViewModel.swift */,
+				BBB00014 /* MonitorViewModel.swift */,
+				BBB00015 /* PurgeViewModel.swift */,
+			);
+			path = ViewModels;
+			sourceTree = "<group>";
+		};
+		DDD00011 /* Services */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00016 /* FileScanner.swift */,
+				BBB00017 /* CacheManager.swift */,
+				BBB00018 /* AppBundleAnalyzer.swift */,
+				BBB00019 /* DiskAnalyzer.swift */,
+				BBB00020 /* SystemMonitor.swift */,
+				BBB00021 /* TrashManager.swift */,
+			);
+			path = Services;
+			sourceTree = "<group>";
+		};
+		DDD00012 /* Models */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00022 /* CacheItem.swift */,
+				BBB00023 /* InstalledApp.swift */,
+				BBB00024 /* DiskItem.swift */,
+				BBB00025 /* SystemStats.swift */,
+				BBB00026 /* ProjectArtifact.swift */,
+			);
+			path = Models;
+			sourceTree = "<group>";
+		};
+		DDD00013 /* Helpers */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00027 /* ByteFormatter.swift */,
+			);
+			path = Helpers;
+			sourceTree = "<group>";
+		};
+		DDD00014 /* Config */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00028 /* CachePaths.swift */,
+				BBB00029 /* AppRemnantPaths.swift */,
+				BBB00030 /* Whitelist.swift */,
+			);
+			path = Config;
+			sourceTree = "<group>";
+		};
+		DDD00015 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00031 /* Assets.xcassets */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
+		DDD00016 /* Purge */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00009 /* PurgeView.swift */,
+			);
+			path = Purge;
+			sourceTree = "<group>";
+		};
+		DDD00017 /* Settings */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00010 /* SettingsView.swift */,
+			);
+			path = Settings;
+			sourceTree = "<group>";
+		};
+		DDD00099 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00000 /* MoleGUI.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		EEE00001 /* MoleGUI */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = FFF00001 /* Build configuration list for PBXNativeTarget "MoleGUI" */;
+			buildPhases = (
+				EEE00002 /* Sources */,
+				CCC00001 /* Frameworks */,
+				EEE00003 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = MoleGUI;
+			productName = MoleGUI;
+			productReference = BBB00000 /* MoleGUI.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		GGG00001 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					EEE00001 = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = FFF00002 /* Build configuration list for PBXProject "MoleGUI" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = DDD00000;
+			productRefGroup = DDD00099 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				EEE00001 /* MoleGUI */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		EEE00003 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAA00031 /* Assets.xcassets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		EEE00002 /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				AAA00001 /* MoleApp.swift in Sources */,
+				AAA00002 /* AppState.swift in Sources */,
+				AAA00003 /* SidebarView.swift in Sources */,
+				AAA00004 /* DashboardView.swift in Sources */,
+				AAA00005 /* CleanerView.swift in Sources */,
+				AAA00006 /* UninstallerView.swift in Sources */,
+				AAA00007 /* AnalyzerView.swift in Sources */,
+				AAA00008 /* MonitorView.swift in Sources */,
+				AAA00009 /* PurgeView.swift in Sources */,
+				AAA00010 /* SettingsView.swift in Sources */,
+				AAA00011 /* CleanerViewModel.swift in Sources */,
+				AAA00012 /* UninstallerViewModel.swift in Sources */,
+				AAA00013 /* AnalyzerViewModel.swift in Sources */,
+				AAA00014 /* MonitorViewModel.swift in Sources */,
+				AAA00015 /* PurgeViewModel.swift in Sources */,
+				AAA00016 /* FileScanner.swift in Sources */,
+				AAA00017 /* CacheManager.swift in Sources */,
+				AAA00018 /* AppBundleAnalyzer.swift in Sources */,
+				AAA00019 /* DiskAnalyzer.swift in Sources */,
+				AAA00020 /* SystemMonitor.swift in Sources */,
+				AAA00021 /* TrashManager.swift in Sources */,
+				AAA00022 /* CacheItem.swift in Sources */,
+				AAA00023 /* InstalledApp.swift in Sources */,
+				AAA00024 /* DiskItem.swift in Sources */,
+				AAA00025 /* SystemStats.swift in Sources */,
+				AAA00026 /* ProjectArtifact.swift in Sources */,
+				AAA00027 /* ByteFormatter.swift in Sources */,
+				AAA00028 /* CachePaths.swift in Sources */,
+				AAA00029 /* AppRemnantPaths.swift in Sources */,
+				AAA00030 /* Whitelist.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		HHH00001 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_TESTABILITY = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_DYNAMIC_NO_PIC = NO;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				GCC_PREPROCESSOR_DEFINITIONS = (
+					"DEBUG=1",
+					"$(inherited)",
+				);
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = INCLUDE_SOURCE;
+				MTL_FAST_MATH = YES;
+				ONLY_ACTIVE_ARCH = YES;
+				SDKROOT = macosx;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		HHH00002 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				ASSETCATALOG_COMPILER_GENERATE_SWIFT_ASSET_SYMBOL_EXTENSIONS = YES;
+				CLANG_ANALYZER_NONNULL = YES;
+				CLANG_ANALYZER_NUMBER_OBJECT_CONVERSION = YES_AGGRESSIVE;
+				CLANG_CXX_LANGUAGE_STANDARD = "gnu++20";
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				CLANG_ENABLE_OBJC_WEAK = YES;
+				CLANG_WARN_BLOCK_CAPTURE_AUTORELEASING = YES;
+				CLANG_WARN_BOOL_CONVERSION = YES;
+				CLANG_WARN_COMMA = YES;
+				CLANG_WARN_CONSTANT_CONVERSION = YES;
+				CLANG_WARN_DEPRECATED_OBJC_IMPLEMENTATIONS = YES;
+				CLANG_WARN_DIRECT_OBJC_ISA_USAGE = YES_ERROR;
+				CLANG_WARN_DOCUMENTATION_COMMENTS = YES;
+				CLANG_WARN_EMPTY_BODY = YES;
+				CLANG_WARN_ENUM_CONVERSION = YES;
+				CLANG_WARN_INFINITE_RECURSION = YES;
+				CLANG_WARN_INT_CONVERSION = YES;
+				CLANG_WARN_NON_LITERAL_NULL_CONVERSION = YES;
+				CLANG_WARN_OBJC_IMPLICIT_RETAIN_SELF = YES;
+				CLANG_WARN_OBJC_LITERAL_CONVERSION = YES;
+				CLANG_WARN_OBJC_ROOT_CLASS = YES_ERROR;
+				CLANG_WARN_QUOTED_INCLUDE_IN_FRAMEWORK_HEADER = YES;
+				CLANG_WARN_RANGE_LOOP_ANALYSIS = YES;
+				CLANG_WARN_STRICT_PROTOTYPES = YES;
+				CLANG_WARN_SUSPICIOUS_MOVE = YES;
+				CLANG_WARN_UNGUARDED_AVAILABILITY = YES_AGGRESSIVE;
+				CLANG_WARN_UNREACHABLE_CODE = YES;
+				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
+				COPY_PHASE_STRIP = NO;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				ENABLE_NS_ASSERTIONS = NO;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				ENABLE_USER_SCRIPT_SANDBOXING = YES;
+				GCC_C_LANGUAGE_STANDARD = gnu17;
+				GCC_NO_COMMON_BLOCKS = YES;
+				GCC_WARN_64_TO_32_BIT_CONVERSION = YES;
+				GCC_WARN_ABOUT_RETURN_TYPE = YES_ERROR;
+				GCC_WARN_UNDECLARED_SELECTOR = YES;
+				GCC_WARN_UNINITIALIZED_AUTOS = YES_AGGRESSIVE;
+				GCC_WARN_UNUSED_FUNCTION = YES;
+				GCC_WARN_UNUSED_VARIABLE = YES;
+				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 13.0;
+				MTL_ENABLE_DEBUG_INFO = NO;
+				MTL_FAST_MATH = YES;
+				SDKROOT = macosx;
+				SWIFT_COMPILATION_MODE = wholemodule;
+			};
+			name = Release;
+		};
+		HHH00003 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MoleGUI/MoleGUI.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mole.MoleGUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Debug;
+		};
+		HHH00004 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ASSETCATALOG_COMPILER_APPICON_NAME = AppIcon;
+				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
+				CODE_SIGN_ENTITLEMENTS = MoleGUI/MoleGUI.entitlements;
+				CODE_SIGN_STYLE = Automatic;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_ASSET_PATHS = "";
+				ENABLE_HARDENED_RUNTIME = YES;
+				ENABLE_PREVIEWS = YES;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = com.mole.MoleGUI;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = YES;
+				SWIFT_VERSION = 5.0;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		FFF00001 /* Build configuration list for PBXNativeTarget "MoleGUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				HHH00003 /* Debug */,
+				HHH00004 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		FFF00002 /* Build configuration list for PBXProject "MoleGUI" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				HHH00001 /* Debug */,
+				HHH00002 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = GGG00001 /* Project object */;
+}
