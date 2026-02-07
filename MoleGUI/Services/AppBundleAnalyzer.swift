@@ -65,13 +65,14 @@ actor AppBundleAnalyzer {
             NSWorkspace.shared.icon(forFile: url.path)
         }
 
-        // Calculate app size
+        // Calculate app size using fast du command
         let size = (try? await scanner.calculateDirectorySize(url)) ?? 0
 
         // Get last used date
         let lastUsed = try? fileManager.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
 
-        var app = InstalledApp(
+        // Don't scan remnants during initial load - defer to when app is selected
+        let app = InstalledApp(
             url: url,
             name: name,
             bundleIdentifier: bundleIdentifier,
@@ -81,12 +82,13 @@ actor AppBundleAnalyzer {
             lastUsed: lastUsed
         )
 
-        // Find remnants if we have a bundle identifier
-        if let bundleId = bundleIdentifier {
-            app.remnants = await findRemnants(bundleIdentifier: bundleId, appName: name)
-        }
-
         return app
+    }
+
+    /// Load remnants for an app on-demand (called when app is selected)
+    func loadRemnantsForApp(_ app: InstalledApp) async -> [AppRemnant] {
+        guard let bundleId = app.bundleIdentifier else { return [] }
+        return await findRemnants(bundleIdentifier: bundleId, appName: app.name)
     }
 
     func findRemnants(bundleIdentifier: String, appName: String) async -> [AppRemnant] {

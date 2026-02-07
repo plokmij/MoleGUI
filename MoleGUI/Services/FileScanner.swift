@@ -93,38 +93,37 @@ actor FileScanner {
     func calculateDirectorySize(_ url: URL) async throws -> Int64 {
         reset()
 
-        guard FileManager.default.fileExists(atPath: url.path) else {
-            return 0
-        }
-
-        var totalSize: Int64 = 0
         let fileManager = FileManager.default
 
-        guard let enumerator = fileManager.enumerator(
-            at: url,
-            includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
-            options: [],
-            errorHandler: { _, _ in true }
-        ) else {
+        guard fileManager.fileExists(atPath: url.path) else {
             return 0
         }
 
-        for case let fileURL as URL in enumerator {
-            guard !isCancelled else {
-                throw ScanError.scanCancelled
-            }
+        // Use `du -sk` for fast size calculation (like Mole does)
+        // This is much faster than enumerating all files
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/du")
+        process.arguments = ["-sk", url.path]
 
-            do {
-                let resourceValues = try fileURL.resourceValues(forKeys: [.fileSizeKey, .isDirectoryKey])
-                if resourceValues.isDirectory == false {
-                    totalSize += Int64(resourceValues.fileSize ?? 0)
-                }
-            } catch {
-                continue
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8),
+               let sizeStr = output.split(separator: "\t").first,
+               let sizeKB = Int64(sizeStr) {
+                return sizeKB * 1024 // Convert KB to bytes
             }
+        } catch {
+            // Fallback: return 0 if du fails
         }
 
-        return totalSize
+        return 0
     }
 
     func scanForCaches(locations: [CacheLocation], progress: @escaping (String, Double) -> Void) async throws -> [CacheCategoryResult] {

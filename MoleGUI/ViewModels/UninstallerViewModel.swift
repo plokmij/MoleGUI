@@ -169,6 +169,21 @@ class UninstallerViewModel: ObservableObject {
 
     func selectApp(_ app: InstalledApp) {
         selectedApp = app
+
+        // Load remnants lazily if not already loaded
+        if app.remnants.isEmpty, app.bundleIdentifier != nil {
+            Task {
+                let remnants = await analyzer.loadRemnantsForApp(app)
+                // Update the app in our list with remnants
+                if let index = apps.firstIndex(where: { $0.id == app.id }) {
+                    apps[index].remnants = remnants
+                    // Update selected app if still the same
+                    if selectedApp?.id == app.id {
+                        selectedApp = apps[index]
+                    }
+                }
+            }
+        }
     }
 
     func confirmUninstall() {
