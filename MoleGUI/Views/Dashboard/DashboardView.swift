@@ -7,15 +7,15 @@ struct DashboardView: View {
 
     var body: some View {
         ScrollView {
-            VStack(spacing: 20) {
+            VStack(spacing: 24) {
                 // Header
-                HStack {
-                    VStack(alignment: .leading) {
+                HStack(alignment: .center, spacing: 16) {
+                    VStack(alignment: .leading, spacing: 4) {
                         Text("System Overview")
-                            .font(.largeTitle)
-                            .fontWeight(.bold)
+                            .font(.system(size: 24, weight: .bold))
 
                         Text("Your Mac is running \(monitorVM.stats.healthStatus.lowercased())")
+                            .font(.subheadline)
                             .foregroundStyle(.secondary)
                     }
 
@@ -23,15 +23,16 @@ struct DashboardView: View {
 
                     HealthScoreView(score: monitorVM.stats.healthScore)
                 }
-                .padding()
+                .padding(.horizontal, 20)
+                .padding(.top, 8)
 
                 // Quick Stats Grid
                 LazyVGrid(columns: [
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible()),
-                    GridItem(.flexible())
-                ], spacing: 16) {
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12),
+                    GridItem(.flexible(), spacing: 12)
+                ], spacing: 12) {
                     QuickStatCard(
                         title: "CPU",
                         value: String(format: "%.0f%%", monitorVM.stats.cpuUsage),
@@ -61,18 +62,19 @@ struct DashboardView: View {
                         title: "Uptime",
                         value: monitorVM.stats.formattedUptime,
                         icon: "clock",
-                        color: .green
+                        color: .green,
+                        isUptime: true
                     )
                 }
-                .padding(.horizontal)
+                .padding(.horizontal, 20)
 
                 // Quick Actions
                 VStack(alignment: .leading, spacing: 12) {
                     Text("Quick Actions")
                         .font(.headline)
-                        .padding(.horizontal)
+                        .padding(.horizontal, 20)
 
-                    HStack(spacing: 16) {
+                    HStack(spacing: 12) {
                         QuickActionButton(
                             title: "Deep Clean",
                             subtitle: "Remove junk files",
@@ -109,7 +111,7 @@ struct DashboardView: View {
                             appState.selectedTab = .purge
                         }
                     }
-                    .padding(.horizontal)
+                    .padding(.horizontal, 20)
                 }
 
                 // Recent Activity
@@ -117,31 +119,35 @@ struct DashboardView: View {
                     VStack(alignment: .leading, spacing: 12) {
                         Text("Recent Activity")
                             .font(.headline)
-                            .padding(.horizontal)
 
                         HStack {
                             Image(systemName: "clock.arrow.circlepath")
+                                .font(.system(size: 14))
                                 .foregroundStyle(.secondary)
 
                             Text("Last scan: \(lastScan, style: .relative) ago")
+                                .font(.subheadline)
                                 .foregroundStyle(.secondary)
 
                             Spacer()
 
                             if appState.totalSpaceReclaimed > 0 {
                                 Text("Total reclaimed: \(ByteFormatter.format(appState.totalSpaceReclaimed))")
+                                    .font(.subheadline)
                                     .foregroundStyle(.green)
                             }
                         }
-                        .padding(.horizontal)
+                        .padding(12)
+                        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
                     }
+                    .padding(.horizontal, 20)
                 }
 
-                Spacer()
+                Spacer(minLength: 20)
             }
-            .padding(.vertical)
+            .padding(.vertical, 16)
         }
-        .background(Color(nsColor: .windowBackgroundColor))
+        .background(Color(nsColor: .controlBackgroundColor))
         .onAppear {
             monitorVM.startMonitoring()
         }
@@ -166,23 +172,23 @@ struct HealthScoreView: View {
     var body: some View {
         ZStack {
             Circle()
-                .stroke(color.opacity(0.2), lineWidth: 8)
+                .stroke(color.opacity(0.15), lineWidth: 6)
 
             Circle()
                 .trim(from: 0, to: CGFloat(score) / 100)
-                .stroke(color, style: StrokeStyle(lineWidth: 8, lineCap: .round))
+                .stroke(color, style: StrokeStyle(lineWidth: 6, lineCap: .round))
                 .rotationEffect(.degrees(-90))
+                .animation(.easeInOut(duration: 0.5), value: score)
 
-            VStack {
+            VStack(spacing: 0) {
                 Text("\(score)")
-                    .font(.title)
-                    .fontWeight(.bold)
+                    .font(.system(size: 22, weight: .bold, design: .rounded))
                 Text("Health")
-                    .font(.caption)
+                    .font(.system(size: 10))
                     .foregroundStyle(.secondary)
             }
         }
-        .frame(width: 80, height: 80)
+        .frame(width: 70, height: 70)
     }
 }
 
@@ -194,33 +200,56 @@ struct QuickStatCard: View {
     let color: Color
     var history: [Double]?
     var percentage: Double?
+    var isUptime: Bool = false
 
     var body: some View {
-        GroupBox {
-            VStack(alignment: .leading, spacing: 8) {
-                Text(value)
-                    .font(.title2)
-                    .fontWeight(.semibold)
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Image(systemName: icon)
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(color)
+                Text(title)
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+                Spacer()
+            }
 
-                if let subtitle = subtitle {
-                    Text(subtitle)
+            Text(value)
+                .font(.system(size: 20, weight: .semibold, design: .rounded))
+                .foregroundStyle(.primary)
+
+            if let subtitle = subtitle {
+                Text(subtitle)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+
+            Spacer(minLength: 0)
+
+            if let history = history, !history.isEmpty {
+                MiniChart(data: history, color: color)
+                    .frame(height: 30)
+            } else if let percentage = percentage {
+                ProgressView(value: percentage / 100)
+                    .tint(color)
+            } else if isUptime {
+                HStack(spacing: 4) {
+                    Circle()
+                        .fill(color)
+                        .frame(width: 6, height: 6)
+                    Text("Running")
                         .font(.caption)
                         .foregroundStyle(.secondary)
                 }
-
-                if let history = history, !history.isEmpty {
-                    MiniChart(data: history, color: color)
-                        .frame(height: 30)
-                } else if let percentage = percentage {
-                    ProgressView(value: percentage / 100)
-                        .tint(color)
-                }
+                .frame(height: 30, alignment: .bottom)
+            } else {
+                Spacer()
+                    .frame(height: 30)
             }
-            .frame(minHeight: 80)
-        } label: {
-            Label(title, systemImage: icon)
-                .foregroundStyle(color)
         }
+        .padding(12)
+        .frame(minHeight: 110)
+        .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 10))
     }
 }
 
@@ -263,28 +292,35 @@ struct QuickActionButton: View {
     let color: Color
     let action: () -> Void
 
+    @State private var isHovered = false
+
     var body: some View {
-        GroupBox {
-            Button(action: action) {
-                VStack(spacing: 8) {
-                    Image(systemName: icon)
-                        .font(.title2)
-                        .foregroundStyle(color)
+        Button(action: action) {
+            VStack(spacing: 8) {
+                Image(systemName: icon)
+                    .font(.system(size: 22, weight: .medium))
+                    .foregroundStyle(color)
 
-                    VStack(spacing: 2) {
-                        Text(title)
-                            .font(.subheadline)
-                            .fontWeight(.medium)
+                VStack(spacing: 2) {
+                    Text(title)
+                        .font(.subheadline)
+                        .fontWeight(.medium)
 
-                        Text(subtitle)
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+                    Text(subtitle)
+                        .font(.caption2)
+                        .foregroundStyle(.secondary)
                 }
-                .frame(maxWidth: .infinity)
-                .padding(.vertical, 8)
             }
-            .buttonStyle(.plain)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 10)
+                    .fill(isHovered ? .regularMaterial : .thinMaterial)
+            )
+        }
+        .buttonStyle(.plain)
+        .onHover { hovering in
+            isHovered = hovering
         }
     }
 }
