@@ -7,7 +7,7 @@ class CleanerViewModel: ObservableObject {
     @Published var scanProgress: Double = 0
     @Published var scanStatus = ""
     @Published var results: [CacheCategoryResult] = []
-    @Published var selectedCategories: Set<CacheCategory> = Set(CacheCategory.allCases)
+    @Published var selectedItems: Set<UUID> = []
     @Published var isCleaning = false
     @Published var cleanResult: CacheManager.CleanResult?
     @Published var error: String?
@@ -20,9 +20,9 @@ class CleanerViewModel: ObservableObject {
     }
 
     var selectedSize: Int64 {
-        results
-            .filter { selectedCategories.contains($0.category) }
-            .reduce(0) { $0 + $1.totalSize }
+        results.flatMap { $0.items }
+            .filter { selectedItems.contains($0.id) }
+            .reduce(0) { $0 + $1.size }
     }
 
     var formattedTotalSize: String {
@@ -33,6 +33,10 @@ class CleanerViewModel: ObservableObject {
         ByteFormatter.format(selectedSize)
     }
 
+    var hasAnySelection: Bool {
+        !selectedItems.isEmpty
+    }
+
     func startScan() {
         guard !isScanning else { return }
 
@@ -40,6 +44,7 @@ class CleanerViewModel: ObservableObject {
         scanProgress = 0
         scanStatus = "Starting scan..."
         results = []
+        selectedItems = []
         error = nil
 
         Task {
@@ -54,6 +59,8 @@ class CleanerViewModel: ObservableObject {
                 }
 
                 self.results = scanResults
+                // Select all items by default
+                self.selectedItems = Set(scanResults.flatMap { $0.items }.map { $0.id })
                 self.isScanning = false
                 self.scanStatus = "Scan complete"
             } catch {
@@ -72,34 +79,60 @@ class CleanerViewModel: ObservableObject {
         }
     }
 
-    func toggleCategory(_ category: CacheCategory) {
-        if selectedCategories.contains(category) {
-            selectedCategories.remove(category)
+    func toggleItem(_ itemId: UUID) {
+        if selectedItems.contains(itemId) {
+            selectedItems.remove(itemId)
         } else {
-            selectedCategories.insert(category)
+            selectedItems.insert(itemId)
         }
     }
 
+    func toggleCategory(_ category: CacheCategory) {
+        guard let categoryResult = results.first(where: { $0.category == category }) else { return }
+        let categoryItemIds = Set(categoryResult.items.map { $0.id })
+
+        if isCategoryFullySelected(category) {
+            // Deselect all items in category
+            selectedItems.subtract(categoryItemIds)
+        } else {
+            // Select all items in category
+            selectedItems.formUnion(categoryItemIds)
+        }
+    }
+
+    func isCategoryFullySelected(_ category: CacheCategory) -> Bool {
+        guard let categoryResult = results.first(where: { $0.category == category }) else { return false }
+        return categoryResult.items.allSatisfy { selectedItems.contains($0.id) }
+    }
+
+    func isCategoryPartiallySelected(_ category: CacheCategory) -> Bool {
+        guard let categoryResult = results.first(where: { $0.category == category }) else { return false }
+        let selectedCount = categoryResult.items.filter { selectedItems.contains($0.id) }.count
+        return selectedCount > 0 && selectedCount < categoryResult.items.count
+    }
+
     func selectAll() {
-        selectedCategories = Set(results.map { $0.category })
+        selectedItems = Set(results.flatMap { $0.items }.map { $0.id })
     }
 
     func deselectAll() {
-        selectedCategories.removeAll()
+        selectedItems.removeAll()
     }
 
     func clean(dryRun: Bool = false) {
         guard !isCleaning else { return }
-
-        let categoriesToClean = results.filter { selectedCategories.contains($0.category) }
-        guard !categoriesToClean.isEmpty else { return }
+        guard !selectedItems.isEmpty else { return }
 
         isCleaning = true
         error = nil
 
+        // Get all selected items
+        let itemsToClean = results.flatMap { $0.items }
+            .filter { selectedItems.contains($0.id) }
+
         Task {
             do {
-                let result = try await cacheManager.cleanCategories(categoriesToClean, dryRun: dryRun)
+                let result = try await cacheManager.cleanItems(itemsToClean, dryRun: dryRun)
                 self.cleanResult = result
 
                 if !dryRun {

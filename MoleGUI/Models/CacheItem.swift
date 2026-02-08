@@ -8,18 +8,22 @@ struct CacheItem: Identifiable, Hashable {
     let category: CacheCategory
     let lastModified: Date?
     let isSelected: Bool
+    let displayName: String?
+    let subtitle: String?
 
     var formattedSize: String {
         ByteFormatter.format(size)
     }
 
-    init(url: URL, name: String, size: Int64, category: CacheCategory, lastModified: Date? = nil, isSelected: Bool = true) {
+    init(url: URL, name: String, size: Int64, category: CacheCategory, lastModified: Date? = nil, isSelected: Bool = true, displayName: String? = nil, subtitle: String? = nil) {
         self.url = url
         self.name = name
         self.size = size
         self.category = category
         self.lastModified = lastModified
         self.isSelected = isSelected
+        self.displayName = displayName
+        self.subtitle = subtitle
     }
 
     func hash(into hasher: inout Hasher) {
@@ -42,6 +46,7 @@ enum CacheCategory: String, CaseIterable, Identifiable {
     case mailAttachments = "Mail Attachments"
     case xcodeData = "Xcode Data"
     case dockerData = "Docker Data"
+    case androidData = "Android Data"
 
     var id: String { rawValue }
 
@@ -57,6 +62,7 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .mailAttachments: return "envelope"
         case .xcodeData: return "hammer"
         case .dockerData: return "shippingbox"
+        case .androidData: return "cpu"
         }
     }
 
@@ -72,6 +78,7 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .mailAttachments: return "indigo"
         case .xcodeData: return "teal"
         case .dockerData: return "mint"
+        case .androidData: return "green"
         }
     }
 }

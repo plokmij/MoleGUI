@@ -66,13 +66,13 @@ struct CleanerView: View {
                             viewModel.clean(dryRun: true)
                             showDryRunResult = true
                         }
-                        .disabled(viewModel.selectedCategories.isEmpty)
+                        .disabled(!viewModel.hasAnySelection)
                     }
 
                     Button("Clean") {
                         viewModel.clean(dryRun: false)
                     }
-                    .disabled(viewModel.selectedCategories.isEmpty || viewModel.isCleaning)
+                    .disabled(!viewModel.hasAnySelection || viewModel.isCleaning)
                 } else {
                     Button("Scan") {
                         viewModel.startScan()
@@ -160,8 +160,11 @@ struct CleanerResultsView: View {
             ForEach(viewModel.results) { categoryResult in
                 CategoryRow(
                     categoryResult: categoryResult,
-                    isSelected: viewModel.selectedCategories.contains(categoryResult.category),
-                    onToggle: { viewModel.toggleCategory(categoryResult.category) }
+                    isFullySelected: viewModel.isCategoryFullySelected(categoryResult.category),
+                    isPartiallySelected: viewModel.isCategoryPartiallySelected(categoryResult.category),
+                    selectedItems: viewModel.selectedItems,
+                    onToggleCategory: { viewModel.toggleCategory(categoryResult.category) },
+                    onToggleItem: { itemId in viewModel.toggleItem(itemId) }
                 )
             }
         }
@@ -171,62 +174,106 @@ struct CleanerResultsView: View {
 
 struct CategoryRow: View {
     let categoryResult: CacheCategoryResult
-    let isSelected: Bool
-    let onToggle: () -> Void
+    let isFullySelected: Bool
+    let isPartiallySelected: Bool
+    let selectedItems: Set<UUID>
+    let onToggleCategory: () -> Void
+    let onToggleItem: (UUID) -> Void
 
     @State private var isExpanded = false
+
+    private var selectedSize: Int64 {
+        categoryResult.items
+            .filter { selectedItems.contains($0.id) }
+            .reduce(0) { $0 + $1.size }
+    }
 
     var body: some View {
         DisclosureGroup(isExpanded: $isExpanded) {
             ForEach(categoryResult.items) { item in
-                HStack {
-                    Image(systemName: "doc")
-                        .foregroundStyle(.secondary)
-
-                    VStack(alignment: .leading) {
-                        Text(item.name)
-                            .lineLimit(1)
-
-                        Text(item.url.path)
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                            .lineLimit(1)
-                    }
-
-                    Spacer()
-
-                    Text(item.formattedSize)
-                        .foregroundStyle(.secondary)
-                }
-                .padding(.vertical, 2)
+                ItemRow(
+                    item: item,
+                    isSelected: selectedItems.contains(item.id),
+                    onToggle: { onToggleItem(item.id) }
+                )
             }
         } label: {
             HStack {
-                Toggle(isOn: Binding(
-                    get: { isSelected },
-                    set: { _ in onToggle() }
-                )) {
-                    HStack {
-                        Image(systemName: categoryResult.category.icon)
-                            .foregroundStyle(.blue)
-                            .frame(width: 24)
-
-                        Text(categoryResult.category.rawValue)
-                            .fontWeight(.medium)
-                    }
+                // Mixed-state checkbox for category
+                Button(action: onToggleCategory) {
+                    Image(systemName: isFullySelected ? "checkmark.square.fill" :
+                            (isPartiallySelected ? "minus.square.fill" : "square"))
+                        .foregroundStyle(isFullySelected || isPartiallySelected ? .blue : .secondary)
+                        .font(.system(size: 16))
                 }
+                .buttonStyle(.plain)
+
+                Image(systemName: categoryResult.category.icon)
+                    .foregroundStyle(.blue)
+                    .frame(width: 24)
+
+                Text(categoryResult.category.rawValue)
+                    .fontWeight(.medium)
 
                 Spacer()
 
-                Text(categoryResult.formattedSize)
-                    .foregroundStyle(isSelected ? .primary : .secondary)
-                    .fontWeight(isSelected ? .medium : .regular)
+                Text(ByteFormatter.format(selectedSize))
+                    .foregroundStyle(isFullySelected || isPartiallySelected ? .primary : .secondary)
+                    .fontWeight(isFullySelected || isPartiallySelected ? .medium : .regular)
 
                 Text("(\(categoryResult.items.count) items)")
                     .foregroundStyle(.secondary)
                     .font(.caption)
             }
         }
+    }
+}
+
+struct ItemRow: View {
+    let item: CacheItem
+    let isSelected: Bool
+    let onToggle: () -> Void
+
+    var body: some View {
+        HStack {
+            Button(action: onToggle) {
+                Image(systemName: isSelected ? "checkmark.square.fill" : "square")
+                    .foregroundStyle(isSelected ? .blue : .secondary)
+                    .font(.system(size: 14))
+            }
+            .buttonStyle(.plain)
+
+            Image(systemName: "doc")
+                .foregroundStyle(.secondary)
+
+            VStack(alignment: .leading, spacing: 2) {
+                if let displayName = item.displayName {
+                    HStack(spacing: 6) {
+                        Text(displayName)
+                            .lineLimit(1)
+                        if let subtitle = item.subtitle {
+                            Text("(\(subtitle))")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+                } else {
+                    Text(item.name)
+                        .lineLimit(1)
+                }
+
+                Text(item.url.path)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
+
+            Spacer()
+
+            Text(item.formattedSize)
+                .foregroundStyle(isSelected ? .primary : .secondary)
+        }
+        .padding(.vertical, 2)
     }
 }
 

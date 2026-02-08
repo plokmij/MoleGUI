@@ -133,7 +133,8 @@ enum CachePaths {
             CacheLocation(
                 path: homeDirectory.appendingPathComponent("Library/Developer/CoreSimulator/Devices"),
                 category: .xcodeData,
-                description: "iOS Simulator data"
+                description: "iOS Simulator data",
+                expandDevices: true
             ),
             CacheLocation(
                 path: homeDirectory.appendingPathComponent("Library/Caches/com.apple.dt.Xcode"),
@@ -149,6 +150,49 @@ enum CachePaths {
                 path: homeDirectory.appendingPathComponent("Library/Containers/com.docker.docker/Data"),
                 category: .dockerData,
                 description: "Docker Desktop data"
+            )
+        ]
+    }
+
+    static var androidData: [CacheLocation] {
+        [
+            // Gradle
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".gradle/caches"),
+                category: .androidData,
+                description: "Gradle dependency cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".gradle/wrapper"),
+                category: .androidData,
+                description: "Gradle wrapper distributions"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".gradle/daemon"),
+                category: .androidData,
+                description: "Gradle daemon logs"
+            ),
+            // Android SDK
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".android/cache"),
+                category: .androidData,
+                description: "Android SDK cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".android/build-cache"),
+                category: .androidData,
+                description: "Android build cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".android/avd"),
+                category: .androidData,
+                description: "Android emulator devices",
+                expandDevices: true
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Android/sdk/.temp"),
+                category: .androidData,
+                description: "Android SDK temp files"
             )
         ]
     }
@@ -179,7 +223,7 @@ enum CachePaths {
     }
 
     static var allLocations: [CacheLocation] {
-        userCaches + browserCaches + logs + applicationCaches + xcodeData + dockerData + trash + mailAttachments
+        userCaches + browserCaches + logs + applicationCaches + xcodeData + dockerData + androidData + trash + mailAttachments
     }
 
     static var safeLocations: [CacheLocation] {
@@ -193,6 +237,14 @@ struct CacheLocation: Identifiable {
     let path: URL
     let category: CacheCategory
     let description: String
+    let expandDevices: Bool
+
+    init(path: URL, category: CacheCategory, description: String, expandDevices: Bool = false) {
+        self.path = path
+        self.category = category
+        self.description = description
+        self.expandDevices = expandDevices
+    }
 
     var exists: Bool {
         FileManager.default.fileExists(atPath: path.path)
