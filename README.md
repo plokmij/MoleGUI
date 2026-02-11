@@ -148,6 +148,7 @@ Based on the original [Mole](https://github.com/tw93/Mole) project by tw93.
 - Built with SwiftUI and Swift Concurrency
 - Inspired by the Mole CLI tool
 - Uses only native Apple frameworks (no external dependencies)
+- App icon from [Twemoji](https://github.com/twitter/twemoji) by Twitter, licensed under [CC-BY 4.0](https://creativecommons.org/licenses/by/4.0/)
 
 ---
 
