@@ -8,6 +8,7 @@ actor TrashManager {
         case moveToTrashFailed(URL, Error)
         case emptyTrashFailed(Error)
         case accessDenied
+        case scriptError(String)
 
         var errorDescription: String? {
             switch self {
@@ -17,6 +18,8 @@ actor TrashManager {
                 return "Failed to empty Trash: \(error.localizedDescription)"
             case .accessDenied:
                 return "Access denied"
+            case .scriptError(let message):
+                return "Script error: \(message)"
             }
         }
     }
@@ -50,42 +53,81 @@ actor TrashManager {
     }
 
     func emptyTrash() async throws -> Int64 {
-        let trashURL = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+        // Get size before emptying
+        let size = await getTrashSize()
 
-        guard fileManager.fileExists(atPath: trashURL.path) else {
-            return 0
-        }
+        // Use osascript to empty trash via Finder
+        let script = "tell application \"Finder\" to empty trash"
 
-        // Calculate size before emptying
-        let size = try await getSize(of: trashURL)
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
 
-        // Get all items in trash
-        let contents = try fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil)
+        do {
+            try process.run()
+            process.waitUntilExit()
 
-        for item in contents {
-            do {
-                try fileManager.removeItem(at: item)
-            } catch {
-                throw TrashError.emptyTrashFailed(error)
+            if process.terminationStatus != 0 {
+                throw TrashError.emptyTrashFailed(NSError(domain: "TrashManager", code: Int(process.terminationStatus)))
             }
+        } catch let error as TrashError {
+            throw error
+        } catch {
+            throw TrashError.emptyTrashFailed(error)
         }
 
         return size
     }
 
     func getTrashSize() async -> Int64 {
-        let trashURL = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
-        return (try? await getSize(of: trashURL)) ?? 0
+        // Use osascript to get trash size from Finder
+        let script = """
+            tell application "Finder"
+                set trashSize to 0
+                try
+                    set trashItems to items of trash
+                    repeat with trashItem in trashItems
+                        try
+                            set trashSize to trashSize + (size of trashItem)
+                        end try
+                    end repeat
+                end try
+                return trashSize
+            end tell
+            """
+
+        guard let output = runOsascript(script) else { return 0 }
+        return Int64(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
     }
 
-    func getTrashItemCount() -> Int {
-        let trashURL = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
+    func getTrashItemCount() async -> Int {
+        // Use osascript to get trash item count from Finder
+        let script = "tell application \"Finder\" to return count of items of trash"
 
-        guard let contents = try? fileManager.contentsOfDirectory(at: trashURL, includingPropertiesForKeys: nil) else {
-            return 0
+        guard let output = runOsascript(script) else { return 0 }
+        return Int(output.trimmingCharacters(in: .whitespacesAndNewlines)) ?? 0
+    }
+
+    private func runOsascript(_ script: String) -> String? {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+        process.arguments = ["-e", script]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            return String(data: data, encoding: .utf8)
+        } catch {
+            return nil
         }
-
-        return contents.count
     }
 
     private func getSize(of url: URL) async throws -> Int64 {

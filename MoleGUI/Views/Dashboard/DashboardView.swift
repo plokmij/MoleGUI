@@ -114,6 +114,43 @@ struct DashboardView: View {
                     .padding(.horizontal, 20)
                 }
 
+                // Trash Section
+                VStack(alignment: .leading, spacing: 12) {
+                    Text("Trash")
+                        .font(.headline)
+
+                    HStack {
+                        Image(systemName: "trash")
+                            .font(.system(size: 14))
+                            .foregroundStyle(.secondary)
+
+                        Text("\(monitorVM.trashItemCount) items")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+
+                        Text("•")
+                            .foregroundStyle(.secondary)
+
+                        Text(ByteFormatter.format(monitorVM.trashSize))
+                            .font(.subheadline)
+                            .fontWeight(.medium)
+
+                        Spacer()
+
+                        Button {
+                            monitorVM.showEmptyTrashConfirmation = true
+                        } label: {
+                            Label("Empty Trash", systemImage: "trash.slash")
+                        }
+                        .buttonStyle(.borderedProminent)
+                        .tint(.red)
+                        .disabled(monitorVM.trashItemCount == 0 || monitorVM.isEmptyingTrash)
+                    }
+                    .padding(12)
+                    .background(.regularMaterial, in: RoundedRectangle(cornerRadius: 8))
+                }
+                .padding(.horizontal, 20)
+
                 // Recent Activity
                 if let lastScan = appState.lastScanDate {
                     VStack(alignment: .leading, spacing: 12) {
@@ -150,9 +187,18 @@ struct DashboardView: View {
         .background(Color(nsColor: .controlBackgroundColor))
         .onAppear {
             monitorVM.startMonitoring()
+            monitorVM.loadTrashInfo()
         }
         .onDisappear {
             monitorVM.stopMonitoring()
+        }
+        .alert("Empty Trash?", isPresented: $monitorVM.showEmptyTrashConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Empty Trash", role: .destructive) {
+                monitorVM.emptyTrash(appState: appState)
+            }
+        } message: {
+            Text("Permanently delete \(monitorVM.trashItemCount) items (\(ByteFormatter.format(monitorVM.trashSize)))? This cannot be undone.")
         }
     }
 }

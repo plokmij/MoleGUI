@@ -6,8 +6,14 @@ import Combine
 class MonitorViewModel: ObservableObject {
     @Published var systemMonitor = SystemMonitor()
     @Published var diskUsage: DiskUsageInfo?
+    @Published var trashSize: Int64 = 0
+    @Published var trashItemCount: Int = 0
+    @Published var isEmptyingTrash = false
+    @Published var showEmptyTrashConfirmation = false
+    @Published var trashError: String?
 
     private let diskAnalyzer = DiskAnalyzer()
+    private let trashManager = TrashManager()
     private var cancellables = Set<AnyCancellable>()
 
     var stats: SystemStats {
@@ -56,5 +62,27 @@ class MonitorViewModel: ObservableObject {
 
     func refreshDiskUsage() {
         loadDiskUsage()
+    }
+
+    func loadTrashInfo() {
+        Task {
+            trashSize = await trashManager.getTrashSize()
+            trashItemCount = await trashManager.getTrashItemCount()
+        }
+    }
+
+    func emptyTrash(appState: AppState) {
+        isEmptyingTrash = true
+        trashError = nil
+        Task {
+            do {
+                let freedSpace = try await trashManager.emptyTrash()
+                appState.addReclaimedSpace(freedSpace)
+                loadTrashInfo()
+            } catch {
+                trashError = error.localizedDescription
+            }
+            isEmptyingTrash = false
+        }
     }
 }
