@@ -1,0 +1,16 @@
+# Release Configuration for MoleGUI
+# Copy this file to release.config and fill in your details
+# DO NOT commit release.config to git!
+
+# Your Developer ID certificate name (from: security find-identity -v -p codesigning)
+DEVELOPER_ID="Developer ID Application: Your Name (TEAMID)"
+
+# Your Apple Developer Team ID (10 character string)
+TEAM_ID="XXXXXXXXXX"
+
+# Your Apple ID email for notarization
+APPLE_ID="your@email.com"
+
+# App-specific password for notarization
+# Generate at: https://appleid.apple.com/account/manage → App-Specific Passwords
+NOTARIZE_PASSWORD="xxxx-xxxx-xxxx-xxxx"

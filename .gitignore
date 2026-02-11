@@ -25,3 +25,11 @@ Carthage/Build/
 # Temporary files
 *.swp
 *.lock
+
+# Release builds
+release/
+*.zip
+*.dmg
+
+# Signing credentials (DO NOT COMMIT)
+release.config
