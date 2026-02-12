@@ -11,6 +11,7 @@ class AnalyzerViewModel: ObservableObject {
     @Published var diskUsage: DiskUsageInfo?
     @Published var error: String?
     @Published var selectedDirectory: URL?
+    @Published var loadingItemId: UUID?
 
     private let analyzer = DiskAnalyzer()
     private let trashManager = TrashManager()
@@ -82,15 +83,75 @@ class AnalyzerViewModel: ObservableObject {
     }
 
     func navigateTo(_ item: DiskItem) {
-        guard item.isDirectory, item.children != nil else { return }
+        guard item.isDirectory else { return }
 
+        // Check if navigating back to an item already in the path
         if let index = currentPath.firstIndex(where: { $0.id == item.id }) {
-            // Navigate back to this item
             currentPath = Array(currentPath.prefix(index + 1))
-        } else {
-            // Navigate forward
-            currentPath.append(item)
+            return
         }
+
+        // If children are already loaded, navigate directly
+        if item.children != nil {
+            currentPath.append(item)
+            return
+        }
+
+        // Lazy load children for this directory
+        loadingItemId = item.id
+        Task {
+            do {
+                let children = try await analyzer.analyzeDirectoryShallow(item.url)
+                var updatedItem = item
+                updatedItem.children = children
+                updateItemInTree(updatedItem)
+                currentPath.append(updatedItem)
+            } catch {
+                self.error = error.localizedDescription
+            }
+            loadingItemId = nil
+        }
+    }
+
+    /// Updates an item in the tree structure (rootItem or currentPath)
+    private func updateItemInTree(_ updatedItem: DiskItem) {
+        // Update in rootItem's children
+        if var root = rootItem {
+            if updateItemRecursive(&root, with: updatedItem) {
+                rootItem = root
+            }
+        }
+
+        // Update in currentPath
+        for i in currentPath.indices {
+            if var pathItem = currentPath[i].children {
+                for j in pathItem.indices {
+                    if pathItem[j].id == updatedItem.id {
+                        pathItem[j] = updatedItem
+                        currentPath[i].children = pathItem
+                        return
+                    }
+                }
+            }
+        }
+    }
+
+    /// Recursively searches and updates an item in the tree
+    private func updateItemRecursive(_ parent: inout DiskItem, with updatedItem: DiskItem) -> Bool {
+        guard var children = parent.children else { return false }
+
+        for i in children.indices {
+            if children[i].id == updatedItem.id {
+                children[i] = updatedItem
+                parent.children = children
+                return true
+            }
+            if updateItemRecursive(&children[i], with: updatedItem) {
+                parent.children = children
+                return true
+            }
+        }
+        return false
     }
 
     func navigateBack() {

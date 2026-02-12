@@ -294,9 +294,11 @@ struct DiskItemRow: View {
                     .lineLimit(1)
 
                 if item.isDirectory {
-                    Text("\(item.children?.count ?? 0) items")
-                        .font(.caption)
-                        .foregroundStyle(.secondary)
+                    if let children = item.children {
+                        Text("\(children.count) items")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
                 }
             }
 
@@ -305,13 +307,21 @@ struct DiskItemRow: View {
             Text(item.formattedSize)
                 .foregroundStyle(.secondary)
 
-            if item.isDirectory && item.children != nil {
-                Button {
-                    viewModel.navigateTo(item)
-                } label: {
+            if item.isDirectory {
+                if viewModel.loadingItemId == item.id {
+                    ProgressView()
+                        .scaleEffect(0.5)
+                        .frame(width: 16, height: 16)
+                } else {
                     Image(systemName: "chevron.right")
+                        .foregroundStyle(.secondary)
                 }
-                .buttonStyle(.plain)
+            }
+        }
+        .contentShape(Rectangle())
+        .onTapGesture {
+            if item.isDirectory {
+                viewModel.navigateTo(item)
             }
         }
         .contextMenu {

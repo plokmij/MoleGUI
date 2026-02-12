@@ -42,6 +42,41 @@ actor DiskAnalyzer {
         return rootItem
     }
 
+    /// Analyzes a single directory level (shallow scan) for lazy loading
+    func analyzeDirectoryShallow(_ url: URL) async throws -> [DiskItem] {
+        let contents = (try? fileManager.contentsOfDirectory(
+            at: url,
+            includingPropertiesForKeys: [.isDirectoryKey, .fileSizeKey],
+            options: [.skipsHiddenFiles]
+        )) ?? []
+
+        var childItems: [DiskItem] = []
+
+        for childURL in contents {
+            let resourceValues = try childURL.resourceValues(forKeys: [.isDirectoryKey, .fileSizeKey])
+            let isDirectory = resourceValues.isDirectory ?? false
+
+            let size: Int64
+            if isDirectory {
+                size = try await calculateSize(of: childURL)
+            } else {
+                size = Int64(resourceValues.fileSize ?? 0)
+            }
+
+            let item = DiskItem(
+                url: childURL,
+                name: childURL.lastPathComponent,
+                size: size,
+                isDirectory: isDirectory,
+                children: nil,
+                depth: 0  // Depth not relevant for shallow scan
+            )
+            childItems.append(item)
+        }
+
+        return childItems.sorted { $0.size > $1.size }
+    }
+
     private func analyzeRecursive(
         url: URL,
         depth: Int,
