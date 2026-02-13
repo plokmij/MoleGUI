@@ -61,6 +61,12 @@ struct CleanerView: View {
 
             ToolbarItemGroup(placement: .primaryAction) {
                 if !viewModel.results.isEmpty {
+                    Button {
+                        viewModel.startScan()
+                    } label: {
+                        Label("Scan Again", systemImage: "arrow.clockwise")
+                    }
+
                     if appState.enableDryRun {
                         Button("Preview") {
                             viewModel.clean(dryRun: true)
