@@ -3,7 +3,7 @@ import Foundation
 enum Whitelist {
     // Paths that should never be deleted
     static var protectedPaths: Set<String> {
-        [
+        var paths: Set<String> = [
             // System critical
             "/System",
             "/usr",
@@ -30,6 +30,52 @@ enum Whitelist {
             "Library/Application Support/KeePassXC",
             "Library/Application Support/Dashlane",
         ]
+
+        // Load user-defined whitelist from config file
+        paths.formUnion(userWhitelistPaths)
+
+        return paths
+    }
+
+    /// Paths loaded from ~/.config/mole/whitelist (one path per line)
+    static var userWhitelistPaths: Set<String> {
+        let configFile = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/mole/whitelist")
+        guard let content = try? String(contentsOf: configFile, encoding: .utf8) else {
+            return []
+        }
+        let lines = content.components(separatedBy: .newlines)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .filter { !$0.isEmpty && !$0.hasPrefix("#") }
+        return Set(lines)
+    }
+
+    /// Writes a path to the user whitelist config file
+    static func addToUserWhitelist(_ path: String) {
+        let configDir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/mole")
+        let configFile = configDir.appendingPathComponent("whitelist")
+
+        try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+
+        var paths = userWhitelistPaths
+        paths.insert(path)
+
+        let content = "# Mole user whitelist - one path per line\n" + paths.sorted().joined(separator: "\n") + "\n"
+        try? content.write(to: configFile, atomically: true, encoding: .utf8)
+    }
+
+    /// Removes a path from the user whitelist config file
+    static func removeFromUserWhitelist(_ path: String) {
+        let configDir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/mole")
+        let configFile = configDir.appendingPathComponent("whitelist")
+
+        var paths = userWhitelistPaths
+        paths.remove(path)
+
+        let content = "# Mole user whitelist - one path per line\n" + paths.sorted().joined(separator: "\n") + "\n"
+        try? content.write(to: configFile, atomically: true, encoding: .utf8)
     }
 
     // Bundle identifiers of apps that should not be uninstalled

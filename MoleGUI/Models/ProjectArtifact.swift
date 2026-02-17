@@ -41,6 +41,21 @@ enum ArtifactType: String, CaseIterable, Identifiable {
     case pythonVenv = "venv"
     case pythonEnv = ".venv"
     case gradleBuild = ".gradle"
+    case pytestCache = ".pytest_cache"
+    case mypyCache = ".mypy_cache"
+    case tox = ".tox"
+    case nox = ".nox"
+    case ruffCache = ".ruff_cache"
+    case nuxt = ".nuxt"
+    case dotOutput = ".output"
+    case turbo = ".turbo"
+    case parcelCache = ".parcel-cache"
+    case zigCache = ".zig-cache"
+    case angular = ".angular"
+    case svelteKit = ".svelte-kit"
+    case coverage = "coverage"
+    case cxx = ".cxx"
+    case expo = ".expo"
 
     var id: String { rawValue }
 
@@ -55,6 +70,13 @@ enum ArtifactType: String, CaseIterable, Identifiable {
         case .vendorBundle: return "shippingbox"
         case .pythonVenv, .pythonEnv: return "terminal.fill"
         case .gradleBuild: return "gear"
+        case .pytestCache, .mypyCache, .ruffCache: return "checklist"
+        case .tox, .nox: return "flask"
+        case .nuxt, .angular, .svelteKit: return "globe"
+        case .dotOutput, .turbo, .parcelCache: return "bolt"
+        case .zigCache, .cxx: return "hammer"
+        case .coverage: return "chart.bar"
+        case .expo: return "iphone"
         }
     }
 
@@ -69,6 +91,13 @@ enum ArtifactType: String, CaseIterable, Identifiable {
         case .vendorBundle: return "red"
         case .pythonVenv, .pythonEnv: return "yellow"
         case .gradleBuild: return "teal"
+        case .pytestCache, .mypyCache, .ruffCache: return "indigo"
+        case .tox, .nox: return "mint"
+        case .nuxt, .angular, .svelteKit: return "green"
+        case .dotOutput, .turbo, .parcelCache: return "orange"
+        case .zigCache, .cxx: return "brown"
+        case .coverage: return "purple"
+        case .expo: return "blue"
         }
     }
 
@@ -85,6 +114,21 @@ enum ArtifactType: String, CaseIterable, Identifiable {
         case .pythonVenv: return "Python virtual environment"
         case .pythonEnv: return "Python environment (.venv)"
         case .gradleBuild: return "Gradle build cache"
+        case .pytestCache: return "pytest cache"
+        case .mypyCache: return "mypy type checker cache"
+        case .tox: return "tox testing environments"
+        case .nox: return "nox testing sessions"
+        case .ruffCache: return "Ruff linter cache"
+        case .nuxt: return "Nuxt.js build output"
+        case .dotOutput: return "Build output directory"
+        case .turbo: return "Turborepo cache"
+        case .parcelCache: return "Parcel bundler cache"
+        case .zigCache: return "Zig compiler cache"
+        case .angular: return "Angular build cache"
+        case .svelteKit: return "SvelteKit build output"
+        case .coverage: return "Code coverage reports"
+        case .cxx: return "C++ CMake build files"
+        case .expo: return "Expo/React Native cache"
         }
     }
 
@@ -100,6 +144,21 @@ enum ArtifactType: String, CaseIterable, Identifiable {
         case "venv": return .pythonVenv
         case ".venv": return .pythonEnv
         case ".gradle": return .gradleBuild
+        case ".pytest_cache": return .pytestCache
+        case ".mypy_cache": return .mypyCache
+        case ".tox": return .tox
+        case ".nox": return .nox
+        case ".ruff_cache": return .ruffCache
+        case ".nuxt": return .nuxt
+        case ".output": return .dotOutput
+        case ".turbo": return .turbo
+        case ".parcel-cache": return .parcelCache
+        case ".zig-cache": return .zigCache
+        case ".angular": return .angular
+        case ".svelte-kit": return .svelteKit
+        case "coverage": return .coverage
+        case ".cxx": return .cxx
+        case ".expo": return .expo
         default: return nil
         }
     }

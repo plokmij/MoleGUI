@@ -10,9 +10,19 @@ struct InstalledApp: Identifiable, Hashable {
     let size: Int64
     let icon: NSImage?
     let lastUsed: Date?
+    var isBrewCask: Bool = false
+    var brewCaskName: String? = nil
 
     var formattedSize: String {
         ByteFormatter.format(size)
+    }
+
+    /// Relative date string like "Today", "3 days ago", "2 weeks ago"
+    var lastUsedRelative: String {
+        guard let date = lastUsed else { return "Unknown" }
+        let formatter = RelativeDateTimeFormatter()
+        formatter.unitsStyle = .full
+        return formatter.localizedString(for: date, relativeTo: Date())
     }
 
     var remnants: [AppRemnant] = []

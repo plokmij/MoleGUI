@@ -17,6 +17,16 @@ struct SettingsView: View {
                     Label("Cleaning", systemImage: "bubbles.and.sparkles")
                 }
 
+            WhitelistSettingsView()
+                .tabItem {
+                    Label("Whitelist", systemImage: "shield")
+                }
+
+            OperationLogView()
+                .tabItem {
+                    Label("Log", systemImage: "doc.text")
+                }
+
             PrivacySettingsView()
                 .tabItem {
                     Label("Privacy", systemImage: "hand.raised")
@@ -28,7 +38,7 @@ struct SettingsView: View {
                 }
         }
         .background(Color(nsColor: .windowBackgroundColor))
-        .frame(minWidth: 450, minHeight: 300)
+        .frame(minWidth: 550, minHeight: 400)
     }
 }
 
@@ -136,6 +146,170 @@ struct PrivacySettingsView: View {
         }
         .formStyle(.grouped)
         .padding()
+    }
+}
+
+struct WhitelistSettingsView: View {
+    @State private var userPaths: [String] = []
+    @State private var newPath = ""
+    @State private var showFilePicker = false
+
+    var body: some View {
+        Form {
+            Section("Custom Whitelist") {
+                VStack(alignment: .leading, spacing: 8) {
+                    Text("Paths added here will never be cleaned or deleted by Mole.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+
+                    HStack {
+                        TextField("Add path...", text: $newPath)
+                            .textFieldStyle(.roundedBorder)
+
+                        Button("Add") {
+                            guard !newPath.isEmpty else { return }
+                            Whitelist.addToUserWhitelist(newPath)
+                            refreshPaths()
+                            newPath = ""
+                        }
+
+                        Button("Browse...") {
+                            let panel = NSOpenPanel()
+                            panel.canChooseFiles = true
+                            panel.canChooseDirectories = true
+                            panel.allowsMultipleSelection = false
+                            if panel.runModal() == .OK, let url = panel.url {
+                                Whitelist.addToUserWhitelist(url.path)
+                                refreshPaths()
+                            }
+                        }
+                    }
+                }
+            }
+
+            Section("User-Defined Protected Paths") {
+                if userPaths.isEmpty {
+                    Text("No custom whitelist entries")
+                        .foregroundStyle(.secondary)
+                        .italic()
+                } else {
+                    ForEach(userPaths, id: \.self) { path in
+                        HStack {
+                            Image(systemName: "folder.badge.minus")
+                                .foregroundStyle(.orange)
+                            Text(path)
+                                .font(.callout)
+                                .lineLimit(1)
+                                .truncationMode(.middle)
+                            Spacer()
+                            Button(role: .destructive) {
+                                Whitelist.removeFromUserWhitelist(path)
+                                refreshPaths()
+                            } label: {
+                                Image(systemName: "xmark.circle.fill")
+                                    .foregroundStyle(.red)
+                            }
+                            .buttonStyle(.plain)
+                        }
+                    }
+                }
+            }
+
+            Section("Built-in Protected Paths") {
+                Text("The following paths are always protected and cannot be removed.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+
+                ForEach(Array(Whitelist.protectedPaths.subtracting(Whitelist.userWhitelistPaths)).sorted(), id: \.self) { path in
+                    HStack {
+                        Image(systemName: "lock.fill")
+                            .foregroundStyle(.green)
+                            .font(.caption)
+                        Text(path)
+                            .font(.callout)
+                            .foregroundStyle(.secondary)
+                    }
+                }
+            }
+        }
+        .formStyle(.grouped)
+        .padding()
+        .onAppear { refreshPaths() }
+    }
+
+    private func refreshPaths() {
+        userPaths = Array(Whitelist.userWhitelistPaths).sorted()
+    }
+}
+
+struct OperationLogView: View {
+    @State private var logEntries: [String] = []
+    @State private var isLoading = false
+
+    var body: some View {
+        VStack(spacing: 12) {
+            HStack {
+                Text("Operation Log")
+                    .font(.headline)
+
+                Spacer()
+
+                Button("Refresh") { loadLog() }
+
+                Button("Clear Log") { clearLog() }
+                    .foregroundStyle(.red)
+            }
+            .padding(.horizontal)
+            .padding(.top, 12)
+
+            if logEntries.isEmpty {
+                VStack(spacing: 8) {
+                    Spacer()
+                    Image(systemName: "doc.text")
+                        .font(.system(size: 40))
+                        .foregroundStyle(.secondary)
+                    Text("No operations logged yet")
+                        .foregroundStyle(.secondary)
+                    Text("File operations will appear here after cleaning.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                }
+            } else {
+                ScrollView {
+                    LazyVStack(alignment: .leading, spacing: 2) {
+                        ForEach(Array(logEntries.reversed().enumerated()), id: \.offset) { _, entry in
+                            Text(entry)
+                                .font(.system(.caption, design: .monospaced))
+                                .foregroundStyle(entry.contains("FAIL") ? .red : .primary)
+                                .textSelection(.enabled)
+                        }
+                    }
+                    .padding(.horizontal)
+                }
+            }
+        }
+        .onAppear { loadLog() }
+    }
+
+    private func loadLog() {
+        isLoading = true
+        Task {
+            let entries = await OperationLogger.shared.recentEntries(count: 500)
+            await MainActor.run {
+                self.logEntries = entries
+                self.isLoading = false
+            }
+        }
+    }
+
+    private func clearLog() {
+        Task {
+            await OperationLogger.shared.clearLog()
+            await MainActor.run {
+                logEntries = []
+            }
+        }
     }
 }
 

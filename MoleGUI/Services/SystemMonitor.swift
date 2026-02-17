@@ -45,6 +45,9 @@ class SystemMonitor: ObservableObject {
         isMonitoring = false
     }
 
+    private var previousDiskReadBytes: Int64 = 0
+    private var previousDiskWriteBytes: Int64 = 0
+
     private func updateStats() {
         let (totalCPU, perCore) = getCPUUsage()
         stats.cpuUsage = totalCPU
@@ -61,6 +64,8 @@ class SystemMonitor: ObservableObject {
         stats.batteryTemperature = batteryInfo.temperature
         stats.batteryCondition = batteryInfo.condition
         stats.batteryIsPresent = batteryInfo.isPresent
+        stats.batteryTimeRemaining = batteryInfo.timeRemaining
+        stats.batteryMaxCapacity = batteryInfo.maxCapacity
 
         // Network stats
         let (netIn, netOut) = getNetworkBytes()
@@ -70,6 +75,31 @@ class SystemMonitor: ObservableObject {
         }
         previousNetworkIn = netIn
         previousNetworkOut = netOut
+
+        // Disk I/O rates
+        let (diskRead, diskWrite) = getDiskIOBytes()
+        if previousDiskReadBytes > 0 {
+            stats.diskReadSpeed = max(0, diskRead - previousDiskReadBytes)
+            stats.diskWriteSpeed = max(0, diskWrite - previousDiskWriteBytes)
+        }
+        previousDiskReadBytes = diskRead
+        previousDiskWriteBytes = diskWrite
+
+        // Fan speed and temperature (update every 3 seconds)
+        if Int(stats.uptime) % 3 == 0 {
+            let thermals = getThermalInfo()
+            stats.fanRPM = thermals.fanSpeeds
+            stats.fanCount = thermals.fanSpeeds.count
+            stats.cpuTemperature = thermals.cpuTemp
+        }
+
+        // Memory pressure (update every 5 seconds)
+        if Int(stats.uptime) % 5 == 0 {
+            stats.memoryPressureLevel = getMemoryPressure()
+            let swapInfo = getSwapInfo()
+            stats.swapUsedMB = swapInfo.used
+            stats.swapTotalMB = swapInfo.total
+        }
 
         // Top processes (update every 5 seconds to reduce overhead)
         if Int(stats.uptime) % 5 == 0 {
@@ -90,6 +120,8 @@ class SystemMonitor: ObservableObject {
         stats.chipName = getChipName()
         stats.totalRAM = ByteFormatter.format(Int64(Foundation.ProcessInfo.processInfo.physicalMemory))
         stats.gpuName = getGPUName()
+        let v = Foundation.ProcessInfo.processInfo.operatingSystemVersion
+        stats.osVersion = "macOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
     }
 
     private func getModelName() -> String {
@@ -253,6 +285,8 @@ class SystemMonitor: ObservableObject {
         var temperature: Double = 0
         var condition: String = "Unknown"
         var isPresent: Bool = false
+        var timeRemaining: Int = -1 // minutes
+        var maxCapacity: Int = 100 // percentage
     }
 
     private func getBatteryInfo() -> BatteryInfo {
@@ -274,6 +308,11 @@ class SystemMonitor: ObservableObject {
             info.isCharging = isCharging
         }
 
+        // Get time remaining from IOPSGetTimeRemainingEstimate
+        if let timeRemaining = description[kIOPSTimeToEmptyKey] as? Int, timeRemaining >= 0 {
+            info.timeRemaining = timeRemaining
+        }
+
         // Get extended battery info from IOKit
         let service = IOServiceGetMatchingService(kIOMainPortDefault, IOServiceMatching("AppleSmartBattery"))
         if service != IO_OBJECT_NULL {
@@ -289,6 +328,12 @@ class SystemMonitor: ObservableObject {
                 info.condition = condition
             } else {
                 info.condition = "Normal"
+            }
+            // Max capacity / design capacity for health percentage
+            if let maxCap = getIORegistryValue(service: service, key: "MaxCapacity") as? Int,
+               let designCap = getIORegistryValue(service: service, key: "DesignCapacity") as? Int,
+               designCap > 0 {
+                info.maxCapacity = min(100, (maxCap * 100) / designCap)
             }
         }
 
@@ -330,6 +375,161 @@ class SystemMonitor: ObservableObject {
         freeifaddrs(ifaddr)
 
         return (bytesIn, bytesOut)
+    }
+
+    // MARK: - Disk I/O
+
+    private func getDiskIOBytes() -> (read: Int64, write: Int64) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/iostat")
+        process.arguments = ["-d", "-c", "1", "-K"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8) {
+                let lines = output.components(separatedBy: .newlines)
+                // iostat output: last line has KB/t, tps, MB/s
+                if let lastLine = lines.dropFirst(2).first(where: { !$0.trimmingCharacters(in: .whitespaces).isEmpty }) {
+                    let parts = lastLine.split(separator: " ", omittingEmptySubsequences: true)
+                    // Format varies, try to extract MB/s values
+                    if parts.count >= 3 {
+                        let mbRead = Double(parts[parts.count - 1]) ?? 0
+                        let mbWrite = Double(parts.count >= 6 ? String(parts[parts.count - 4]) : "0") ?? 0
+                        return (Int64(mbRead * 1024 * 1024), Int64(mbWrite * 1024 * 1024))
+                    }
+                }
+            }
+        } catch {}
+
+        return (0, 0)
+    }
+
+    // MARK: - Thermal Info (Fan Speed & Temperature)
+
+    private struct ThermalInfo {
+        var cpuTemp: Double = 0
+        var fanSpeeds: [Int] = []
+    }
+
+    private func getThermalInfo() -> ThermalInfo {
+        var info = ThermalInfo()
+
+        // Try to get fan speed from IOKit
+        var iterator: io_iterator_t = 0
+        let matchDict = IOServiceMatching("AppleSMCFanControl") ?? IOServiceMatching("SMCFanControl")
+        if let matchDict = matchDict {
+            if IOServiceGetMatchingServices(kIOMainPortDefault, matchDict, &iterator) == KERN_SUCCESS {
+                var service = IOIteratorNext(iterator)
+                while service != IO_OBJECT_NULL {
+                    // Try to read fan speeds
+                    if let fanSpeed = getIORegistryValue(service: service, key: "FanSpeed") as? [Int] {
+                        info.fanSpeeds = fanSpeed
+                    }
+                    IOObjectRelease(service)
+                    service = IOIteratorNext(iterator)
+                }
+                IOObjectRelease(iterator)
+            }
+        }
+
+        // Fallback: use powermetrics or smc for temperature
+        // Since direct SMC access requires privileges, we use a lightweight approach
+        let tempProcess = Process()
+        tempProcess.executableURL = URL(fileURLWithPath: "/usr/bin/sudo")
+        tempProcess.arguments = ["-n", "powermetrics", "--samplers", "smc", "-i", "1", "-n", "1"]
+
+        let tempPipe = Pipe()
+        tempProcess.standardOutput = tempPipe
+        tempProcess.standardError = FileHandle.nullDevice
+
+        do {
+            try tempProcess.run()
+            tempProcess.waitUntilExit()
+            let data = tempPipe.fileHandleForReading.readDataToEndOfFile()
+            if let output = String(data: data, encoding: .utf8) {
+                // Parse CPU die temperature
+                for line in output.components(separatedBy: .newlines) {
+                    if line.contains("CPU die temperature") || line.contains("Die temperature") {
+                        let parts = line.components(separatedBy: ":")
+                        if let tempStr = parts.last?.trimmingCharacters(in: .whitespaces).replacingOccurrences(of: " C", with: ""),
+                           let temp = Double(tempStr) {
+                            info.cpuTemp = temp
+                        }
+                    }
+                }
+            }
+        } catch {}
+
+        return info
+    }
+
+    // MARK: - Memory Pressure
+
+    private func getMemoryPressure() -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/memory_pressure")
+        process.arguments = ["-Q"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            if output.contains("critical") { return "Critical" }
+            if output.contains("warn") { return "Warning" }
+            return "Normal"
+        } catch {
+            return "Normal"
+        }
+    }
+
+    // MARK: - Swap Info
+
+    private func getSwapInfo() -> (used: Int64, total: Int64) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/sbin/sysctl")
+        process.arguments = ["vm.swapusage"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+
+            var used: Int64 = 0
+            var total: Int64 = 0
+
+            if let totalRange = output.range(of: "total = ") {
+                let afterTotal = output[totalRange.upperBound...]
+                if let mRange = afterTotal.range(of: "M") {
+                    total = Int64(Double(afterTotal[..<mRange.lowerBound].trimmingCharacters(in: .whitespaces)) ?? 0)
+                }
+            }
+            if let usedRange = output.range(of: "used = ") {
+                let afterUsed = output[usedRange.upperBound...]
+                if let mRange = afterUsed.range(of: "M") {
+                    used = Int64(Double(afterUsed[..<mRange.lowerBound].trimmingCharacters(in: .whitespaces)) ?? 0)
+                }
+            }
+
+            return (used, total)
+        } catch {
+            return (0, 0)
+        }
     }
 
     // MARK: - Top Processes

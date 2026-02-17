@@ -14,6 +14,7 @@ actor OrphanDetector {
         "WebKit",
         "HTTPStorages",
         "Cookies",
+        "LaunchAgents",
     ]
 
     /// Minimum days since last modification before considering data orphaned
@@ -57,6 +58,9 @@ actor OrphanDetector {
                 if installedBundleIds.contains(name) { continue }
                 if installedBundleIds.contains(where: { $0.localizedCaseInsensitiveCompare(name) == .orderedSame }) { continue }
 
+                // mdfind Spotlight fallback - verify app truly doesn't exist
+                if appExistsViaMdfind(name) { continue }
+
                 // Check inactivity threshold
                 if let modDate = try? itemURL.resourceValues(forKeys: [.contentModificationDateKey]).contentModificationDate {
                     let daysSinceModified = Calendar.current.dateComponents([.day], from: modDate, to: Date()).day ?? 0
@@ -94,10 +98,24 @@ actor OrphanDetector {
             URL(fileURLWithPath: "/System/Applications"),
         ]
 
-        // Check Homebrew caskroom
-        let brewCaskroom = URL(fileURLWithPath: "/opt/homebrew/Caskroom")
-        if fileManager.fileExists(atPath: brewCaskroom.path) {
-            // Caskroom apps are symlinked to /Applications, already covered
+        // Check Setapp applications
+        let setappDir = homeDirectory.appendingPathComponent("Library/Application Support/Setapp/Applications")
+        if fileManager.fileExists(atPath: setappDir.path) {
+            if let enumerator = fileManager.enumerator(
+                at: setappDir,
+                includingPropertiesForKeys: [.isDirectoryKey],
+                options: [.skipsHiddenFiles],
+                errorHandler: nil
+            ) {
+                for case let url as URL in enumerator {
+                    if url.pathExtension == "app" {
+                        enumerator.skipDescendants()
+                        if let bundle = Bundle(url: url), let id = bundle.bundleIdentifier {
+                            bundleIds.insert(id)
+                        }
+                    }
+                }
+            }
         }
 
         for searchPath in searchPaths {
@@ -128,7 +146,96 @@ actor OrphanDetector {
             }
         }
 
+        // Add hardcoded system component bundle IDs that are not in /Applications
+        let systemBundleIds: Set<String> = [
+            "com.apple.ScreenSaver.Engine",
+            "com.apple.dock",
+            "com.apple.loginwindow",
+            "com.apple.controlcenter",
+            "com.apple.notificationcenterui",
+            "com.apple.Spotlight",
+            "com.apple.accessibility.heard",
+            "com.apple.FolderActionsDispatcher",
+        ]
+        bundleIds.formUnion(systemBundleIds)
+
         return bundleIds
+    }
+
+    // MARK: - Spotlight Fallback
+
+    /// Uses mdfind (Spotlight) to verify if an app with the given bundle ID exists anywhere
+    private func appExistsViaMdfind(_ bundleId: String) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/mdfind")
+        process.arguments = ["kMDItemCFBundleIdentifier == '\(bundleId)'"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            let output = String(data: data, encoding: .utf8) ?? ""
+            return !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        } catch {
+            return false
+        }
+    }
+
+    // MARK: - Orphaned LaunchDaemons
+
+    /// Scans system-level LaunchDaemons/LaunchAgents for orphaned entries
+    func scanOrphanedServices(installedBundleIds: Set<String>) async -> [CacheItem] {
+        var orphans: [CacheItem] = []
+
+        let serviceDirs = [
+            homeDirectory.appendingPathComponent("Library/LaunchAgents"),
+            URL(fileURLWithPath: "/Library/LaunchAgents"),
+            URL(fileURLWithPath: "/Library/LaunchDaemons"),
+        ]
+
+        for dir in serviceDirs {
+            guard fileManager.fileExists(atPath: dir.path) else { continue }
+            guard let contents = try? fileManager.contentsOfDirectory(at: dir, includingPropertiesForKeys: [.fileSizeKey]) else { continue }
+
+            for plistURL in contents where plistURL.pathExtension == "plist" {
+                guard !isCancelled else { break }
+
+                let name = plistURL.deletingPathExtension().lastPathComponent
+
+                // Skip system and protected items
+                if name.hasPrefix("com.apple.") { continue }
+                if Whitelist.isProtectedOrphan(name) { continue }
+
+                // Extract bundle ID from plist name
+                guard looksLikeBundleId(name) else { continue }
+
+                // Check if any installed app matches
+                if installedBundleIds.contains(name) { continue }
+                if installedBundleIds.contains(where: { $0.localizedCaseInsensitiveCompare(name) == .orderedSame }) { continue }
+
+                // mdfind fallback check
+                if appExistsViaMdfind(name) { continue }
+
+                let size = (try? fileManager.attributesOfItem(atPath: plistURL.path)[.size] as? Int64) ?? 0
+
+                let item = CacheItem(
+                    url: plistURL,
+                    name: name,
+                    size: size,
+                    category: .orphanedData,
+                    lastModified: try? fileManager.attributesOfItem(atPath: plistURL.path)[.modificationDate] as? Date,
+                    displayName: extractAppName(from: name),
+                    subtitle: dir.lastPathComponent
+                )
+                orphans.append(item)
+            }
+        }
+
+        return orphans
     }
 
     private func looksLikeBundleId(_ name: String) -> Bool {

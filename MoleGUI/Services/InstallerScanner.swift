@@ -17,12 +17,16 @@ actor InstallerScanner {
             (homeDirectory.appendingPathComponent("Public"), .publicFolder),
             (homeDirectory.appendingPathComponent("Library/Downloads"), .libraryDownloads),
             (URL(fileURLWithPath: "/Users/Shared"), .shared),
+            (URL(fileURLWithPath: "/Users/Shared/Downloads"), .shared),
             (homeDirectory.appendingPathComponent("Library/Caches/Homebrew/downloads"), .homebrew),
             // iCloud Downloads
             (homeDirectory.appendingPathComponent("Library/Mobile Documents/com~apple~CloudDocs/Downloads"), .iCloud),
             // Mail Downloads
             (homeDirectory.appendingPathComponent("Library/Mail Downloads"), .mail),
             (homeDirectory.appendingPathComponent("Library/Containers/com.apple.mail/Data/Library/Mail Downloads"), .mail),
+            // Telegram Downloads
+            (homeDirectory.appendingPathComponent("Library/Application Support/Telegram Desktop"), .telegram),
+            (homeDirectory.appendingPathComponent("Downloads/Telegram Desktop"), .telegram),
         ]
     }
 
@@ -80,9 +84,15 @@ actor InstallerScanner {
 
             guard size > 0 else { continue }
 
+            // Clean up Homebrew download names (strip SHA256-- prefix)
+            var displayName = fileURL.lastPathComponent
+            if source == .homebrew, let hashRange = displayName.range(of: #"^[a-f0-9]{64}--"#, options: .regularExpression) {
+                displayName = String(displayName[hashRange.upperBound...])
+            }
+
             let item = InstallerItem(
                 url: fileURL,
-                fileName: fileURL.lastPathComponent,
+                fileName: displayName,
                 size: size,
                 source: source,
                 fileType: fileType,

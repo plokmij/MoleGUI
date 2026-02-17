@@ -45,6 +45,12 @@ struct OptimizerView: View {
                 OptimizationActionsSection(viewModel: viewModel)
                     .padding(.horizontal)
 
+                // Security Fix Actions
+                if let security = viewModel.securityStatus, !security.allSecure {
+                    SecurityFixActionsSection(viewModel: viewModel)
+                        .padding(.horizontal)
+                }
+
                 // Results
                 if viewModel.showResults {
                     OptimizationResultsSection(results: viewModel.results)
@@ -72,7 +78,7 @@ struct OptimizerView: View {
                 Button("Optimize") {
                     viewModel.optimize()
                 }
-                .disabled(viewModel.selectedCount == 0 || viewModel.isOptimizing)
+                .disabled(viewModel.totalSelectedCount == 0 || viewModel.isOptimizing)
             }
         }
         .onAppear {
@@ -128,7 +134,17 @@ struct SecurityStatusSection: View {
         GroupBox {
             VStack(spacing: 8) {
                 SecurityRow(name: "FileVault Encryption", enabled: status.fileVaultEnabled)
-                SecurityRow(name: "Firewall", enabled: status.firewallEnabled)
+                SecurityRow(name: "Firewall", enabled: status.firewallEnabled || status.thirdPartyFirewall != nil)
+                if let thirdParty = status.thirdPartyFirewall {
+                    HStack {
+                        Image(systemName: "info.circle.fill")
+                            .foregroundStyle(.blue)
+                        Text("Third-party firewall: \(thirdParty)")
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                        Spacer()
+                    }
+                }
                 SecurityRow(name: "Gatekeeper", enabled: status.gatekeeperEnabled)
                 SecurityRow(name: "System Integrity Protection", enabled: status.sipEnabled)
                 SecurityRow(name: "Touch ID for Sudo", enabled: status.touchIdForSudo)
@@ -277,6 +293,55 @@ struct OptimizationActionsSection: View {
         } label: {
             Label("Optimization Actions", systemImage: "bolt.fill")
                 .foregroundStyle(.purple)
+        }
+    }
+}
+
+// MARK: - Security Fix Actions
+
+struct SecurityFixActionsSection: View {
+    @ObservedObject var viewModel: OptimizerViewModel
+
+    var body: some View {
+        GroupBox {
+            VStack(spacing: 4) {
+                ForEach(viewModel.securityFixActions) { action in
+                    HStack {
+                        Button {
+                            viewModel.toggleSecurityFix(action.id)
+                        } label: {
+                            Image(systemName: action.isSelected ? "checkmark.square.fill" : "square")
+                                .foregroundStyle(action.isSelected ? .orange : .secondary)
+                        }
+                        .buttonStyle(.plain)
+
+                        Image(systemName: action.icon)
+                            .foregroundStyle(.orange)
+                            .frame(width: 24)
+
+                        VStack(alignment: .leading) {
+                            HStack(spacing: 4) {
+                                Text(action.name)
+                                    .fontWeight(.medium)
+
+                                Image(systemName: "lock.fill")
+                                    .font(.caption2)
+                                    .foregroundStyle(.orange)
+                            }
+
+                            Text(action.description)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+
+                        Spacer()
+                    }
+                    .padding(.vertical, 4)
+                }
+            }
+        } label: {
+            Label("Security Fixes", systemImage: "shield.lefthalf.filled")
+                .foregroundStyle(.orange)
         }
     }
 }

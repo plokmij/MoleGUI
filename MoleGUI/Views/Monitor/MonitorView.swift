@@ -75,6 +75,42 @@ struct MonitorView: View {
                         .padding(.horizontal)
                 }
 
+                // Thermal & Fan Section
+                if viewModel.stats.cpuTemperature > 0 || !viewModel.stats.fanRPM.isEmpty {
+                    GroupBox {
+                        VStack(spacing: 8) {
+                            if viewModel.stats.cpuTemperature > 0 {
+                                HStack {
+                                    Image(systemName: "thermometer.medium")
+                                        .foregroundStyle(viewModel.stats.cpuTemperature > 80 ? .red : .orange)
+                                        .frame(width: 24)
+                                    Text("CPU Temperature")
+                                    Spacer()
+                                    Text(viewModel.stats.formattedCPUTemp)
+                                        .foregroundStyle(viewModel.stats.cpuTemperature > 80 ? .red : .secondary)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                            ForEach(Array(viewModel.stats.fanRPM.enumerated()), id: \.offset) { index, rpm in
+                                HStack {
+                                    Image(systemName: "fan.fill")
+                                        .foregroundStyle(.cyan)
+                                        .frame(width: 24)
+                                    Text("Fan \(index + 1)")
+                                    Spacer()
+                                    Text("\(rpm) RPM")
+                                        .foregroundStyle(.secondary)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("Thermals", systemImage: "thermometer")
+                            .foregroundStyle(.orange)
+                    }
+                    .padding(.horizontal)
+                }
+
                 // GPU Section
                 if !viewModel.stats.gpuName.isEmpty {
                     GroupBox {
@@ -91,6 +127,40 @@ struct MonitorView: View {
                     } label: {
                         Label("Graphics", systemImage: "display")
                             .foregroundStyle(.green)
+                    }
+                    .padding(.horizontal)
+                }
+
+                // Memory Pressure & Swap
+                if viewModel.stats.memoryPressureLevel != "Normal" || viewModel.stats.swapUsedMB > 0 {
+                    GroupBox {
+                        VStack(spacing: 8) {
+                            HStack {
+                                Image(systemName: viewModel.stats.memoryPressureLevel == "Critical" ? "exclamationmark.triangle.fill" : "gauge.open.with.lines.needle.33percent")
+                                    .foregroundStyle(viewModel.stats.memoryPressureLevel == "Critical" ? .red : (viewModel.stats.memoryPressureLevel == "Warning" ? .orange : .green))
+                                    .frame(width: 24)
+                                Text("Memory Pressure")
+                                Spacer()
+                                Text(viewModel.stats.memoryPressureLevel)
+                                    .foregroundStyle(viewModel.stats.memoryPressureLevel == "Normal" ? .green : .orange)
+                                    .fontWeight(.medium)
+                            }
+                            if viewModel.stats.swapUsedMB > 0 {
+                                HStack {
+                                    Image(systemName: "arrow.triangle.swap")
+                                        .foregroundStyle(.purple)
+                                        .frame(width: 24)
+                                    Text("Swap")
+                                    Spacer()
+                                    Text(viewModel.stats.formattedSwap)
+                                        .foregroundStyle(.secondary)
+                                        .fontWeight(.medium)
+                                }
+                            }
+                        }
+                    } label: {
+                        Label("Memory Details", systemImage: "memorychip")
+                            .foregroundStyle(.purple)
                     }
                     .padding(.horizontal)
                 }
@@ -179,6 +249,60 @@ struct MonitorView: View {
                             }
                         }
                         .frame(height: 120)
+                    }
+
+                    // Disk I/O Chart
+                    if viewModel.stats.diskReadSpeed > 0 || viewModel.stats.diskWriteSpeed > 0 {
+                        ChartCard(title: "Disk I/O", icon: "internaldrive", color: .orange) {
+                            HStack(spacing: 20) {
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Image(systemName: "arrow.down")
+                                            .foregroundStyle(.orange)
+                                        Text(viewModel.stats.formattedDiskRead)
+                                            .fontWeight(.medium)
+                                    }
+                                    Text("Read")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                VStack(alignment: .leading) {
+                                    HStack {
+                                        Image(systemName: "arrow.up")
+                                            .foregroundStyle(.red)
+                                        Text(viewModel.stats.formattedDiskWrite)
+                                            .fontWeight(.medium)
+                                    }
+                                    Text("Write")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Chart {
+                                    ForEach(Array(viewModel.diskIOReadHistory.enumerated()), id: \.offset) { index, value in
+                                        LineMark(
+                                            x: .value("Time", index),
+                                            y: .value("Read", value)
+                                        )
+                                        .foregroundStyle(.orange)
+                                    }
+
+                                    ForEach(Array(viewModel.diskIOWriteHistory.enumerated()), id: \.offset) { index, value in
+                                        LineMark(
+                                            x: .value("Time", index),
+                                            y: .value("Write", value)
+                                        )
+                                        .foregroundStyle(.red)
+                                    }
+                                }
+                                .chartXAxis(.hidden)
+                                .chartYAxis(.hidden)
+                                .frame(width: 200, height: 60)
+                            }
+                        }
                     }
 
                     // Network Chart
@@ -310,6 +434,21 @@ struct BatteryInfoCard: View {
                             Text("Temp:")
                                 .foregroundStyle(.secondary)
                             Text(stats.formattedBatteryTemp)
+                        }
+                    }
+                    if stats.batteryMaxCapacity < 100 {
+                        HStack {
+                            Text("Health:")
+                                .foregroundStyle(.secondary)
+                            Text("\(stats.batteryMaxCapacity)%")
+                                .foregroundStyle(stats.batteryMaxCapacity < 80 ? .orange : .primary)
+                        }
+                    }
+                    if !stats.isCharging && stats.batteryTimeRemaining >= 0 {
+                        HStack {
+                            Text(stats.formattedBatteryTimeRemaining)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
                 }

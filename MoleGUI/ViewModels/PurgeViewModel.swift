@@ -35,6 +35,9 @@ class PurgeViewModel: ObservableObject {
         ByteFormatter.format(selectedSize)
     }
 
+    /// Number of days within which artifacts are auto-deselected for safety
+    private let recencyProtectionDays = 7
+
     func startScan(in directory: URL? = nil) {
         let targetDirectory = directory ?? FileManager.default.homeDirectoryForCurrentUser
 
@@ -60,13 +63,26 @@ class PurgeViewModel: ObservableObject {
 
                 self.artifacts = foundArtifacts
                 self.groupArtifacts()
+                // Select all, then deselect recently modified (7-day protection)
                 self.selectAll()
+                self.applyRecencyProtection()
                 self.isScanning = false
                 self.scanStatus = "Found \(foundArtifacts.count) artifacts"
             } catch {
                 self.error = error.localizedDescription
                 self.isScanning = false
                 self.scanStatus = "Scan failed"
+            }
+        }
+    }
+
+    /// Auto-deselects artifacts modified within the last 7 days
+    private func applyRecencyProtection() {
+        let cutoff = Calendar.current.date(byAdding: .day, value: -recencyProtectionDays, to: Date()) ?? Date()
+
+        for artifact in artifacts {
+            if let lastModified = artifact.lastModified, lastModified > cutoff {
+                selectedArtifacts.remove(artifact.id)
             }
         }
     }

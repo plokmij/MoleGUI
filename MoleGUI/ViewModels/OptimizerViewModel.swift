@@ -89,6 +89,55 @@ class OptimizerViewModel: ObservableObject {
             icon: "dock.rectangle",
             requiresAdmin: false
         ),
+        OptimizationAction(
+            name: "Rebuild Spotlight Index",
+            description: "Rebuild the Spotlight search index",
+            icon: "magnifyingglass",
+            requiresAdmin: true
+        ),
+        OptimizationAction(
+            name: "Restart Bluetooth",
+            description: "Restart Bluetooth daemon (skips if HID/audio active)",
+            icon: "wave.3.right",
+            requiresAdmin: true
+        ),
+        OptimizationAction(
+            name: "Refresh Icon Services",
+            description: "Rebuild icon caches to fix missing/wrong icons",
+            icon: "photo",
+            requiresAdmin: false
+        ),
+        OptimizationAction(
+            name: "Check macOS Updates",
+            description: "Check for available macOS software updates",
+            icon: "arrow.triangle.2.circlepath",
+            requiresAdmin: false,
+            isSelected: false
+        ),
+    ]
+
+    @Published var securityFixActions: [OptimizationAction] = [
+        OptimizationAction(
+            name: "Enable Firewall",
+            description: "Turn on the macOS application firewall",
+            icon: "flame",
+            requiresAdmin: true,
+            isSelected: false
+        ),
+        OptimizationAction(
+            name: "Enable Gatekeeper",
+            description: "Ensure Gatekeeper is protecting app installations",
+            icon: "shield.checkered",
+            requiresAdmin: true,
+            isSelected: false
+        ),
+        OptimizationAction(
+            name: "Enable Touch ID for Sudo",
+            description: "Use Touch ID instead of password for terminal sudo",
+            icon: "touchid",
+            requiresAdmin: true,
+            isSelected: false
+        ),
     ]
 
     private let optimizer = SystemOptimizer()
@@ -126,20 +175,32 @@ class OptimizerViewModel: ObservableObject {
         actions.filter(\.isSelected).count
     }
 
+    var totalSelectedCount: Int {
+        actions.filter(\.isSelected).count + securityFixActions.filter(\.isSelected).count
+    }
+
+    func toggleSecurityFix(_ actionId: UUID) {
+        if let index = securityFixActions.firstIndex(where: { $0.id == actionId }) {
+            securityFixActions[index].isSelected.toggle()
+        }
+    }
+
     func optimize() {
         guard !isOptimizing else { return }
         let selectedActions = actions.filter(\.isSelected)
-        guard !selectedActions.isEmpty else { return }
+        let selectedFixes = securityFixActions.filter(\.isSelected)
+        let allSelected = selectedActions + selectedFixes
+        guard !allSelected.isEmpty else { return }
 
         isOptimizing = true
         results = []
         optimizeProgress = 0
 
         Task {
-            let total = Double(selectedActions.count)
+            let total = Double(allSelected.count)
             var completed = 0.0
 
-            for action in selectedActions {
+            for action in allSelected {
                 optimizeStatus = action.name
 
                 let result: SystemOptimizer.OptimizationResult
@@ -166,6 +227,20 @@ class OptimizerViewModel: ObservableObject {
                     result = await optimizer.repairDiskPermissions()
                 case "Refresh Dock":
                     result = await optimizer.refreshDock()
+                case "Rebuild Spotlight Index":
+                    result = await optimizer.rebuildSpotlight()
+                case "Restart Bluetooth":
+                    result = await optimizer.restartBluetooth()
+                case "Refresh Icon Services":
+                    result = await optimizer.refreshIconServices()
+                case "Check macOS Updates":
+                    result = await optimizer.checkForMacOSUpdates()
+                case "Enable Firewall":
+                    result = await optimizer.enableFirewall()
+                case "Enable Gatekeeper":
+                    result = await optimizer.enableGatekeeper()
+                case "Enable Touch ID for Sudo":
+                    result = await optimizer.enableTouchIdForSudo()
                 default:
                     result = SystemOptimizer.OptimizationResult(action: action.name, success: false, message: "Unknown action")
                 }
@@ -178,6 +253,11 @@ class OptimizerViewModel: ObservableObject {
             optimizeStatus = "Optimization complete"
             isOptimizing = false
             showResults = true
+
+            // Refresh security status after fixes
+            if !selectedFixes.isEmpty {
+                checkStatus()
+            }
         }
     }
 }

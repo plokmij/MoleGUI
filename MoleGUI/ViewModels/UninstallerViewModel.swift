@@ -201,6 +201,17 @@ class UninstallerViewModel: ObservableObject {
 
         Task {
             do {
+                // If it's a brew cask, try brew uninstall first
+                if app.isBrewCask, let caskName = app.brewCaskName {
+                    let brewSuccess = try await analyzer.uninstallBrewCask(caskName)
+                    if brewSuccess {
+                        apps.removeAll { $0.id == app.id }
+                        selectedApp = nil
+                        isUninstalling = false
+                        return
+                    }
+                }
+
                 _ = try await analyzer.uninstallApp(app, includeRemnants: includeRemnants)
 
                 // Remove from list

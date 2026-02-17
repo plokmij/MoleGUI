@@ -69,7 +69,30 @@ enum CachePaths {
                 path: homeDirectory.appendingPathComponent("Library/Caches/company.thebrowser.Browser"),
                 category: .browserCache,
                 description: "Arc browser cache"
-            )
+            ),
+            // Brave
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/BraveSoftware"),
+                category: .browserCache,
+                description: "Brave browser cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Application Support/BraveSoftware/Brave-Browser/Default/Cache"),
+                category: .browserCache,
+                description: "Brave browsing cache"
+            ),
+            // Opera
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.operasoftware.Opera"),
+                category: .browserCache,
+                description: "Opera cache"
+            ),
+            // Vivaldi
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.vivaldi.Vivaldi"),
+                category: .browserCache,
+                description: "Vivaldi cache"
+            ),
         ]
     }
 
@@ -439,6 +462,230 @@ enum CachePaths {
                 category: .applicationCache,
                 description: "Airmail cache"
             ),
+
+            // Cloud Storage
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.getdropbox.dropbox"),
+                category: .applicationCache,
+                description: "Dropbox cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.google.GoogleDrive"),
+                category: .applicationCache,
+                description: "Google Drive cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.microsoft.OneDrive"),
+                category: .applicationCache,
+                description: "OneDrive cache"
+            ),
+
+            // Office Apps
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.microsoft.Word"),
+                category: .applicationCache,
+                description: "Microsoft Word cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.microsoft.Excel"),
+                category: .applicationCache,
+                description: "Microsoft Excel cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.microsoft.Powerpoint"),
+                category: .applicationCache,
+                description: "Microsoft PowerPoint cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.microsoft.Outlook"),
+                category: .applicationCache,
+                description: "Microsoft Outlook cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.apple.iWork.Pages"),
+                category: .applicationCache,
+                description: "Pages cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.apple.iWork.Numbers"),
+                category: .applicationCache,
+                description: "Numbers cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.apple.iWork.Keynote"),
+                category: .applicationCache,
+                description: "Keynote cache"
+            ),
+
+            // VM Caches
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.vmware.fusion"),
+                category: .applicationCache,
+                description: "VMware Fusion cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.parallels.desktop.console"),
+                category: .applicationCache,
+                description: "Parallels Desktop cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/org.virtualbox.app.VirtualBox"),
+                category: .applicationCache,
+                description: "VirtualBox cache"
+            ),
+
+            // Remote Desktop
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.teamviewer.TeamViewer"),
+                category: .applicationCache,
+                description: "TeamViewer cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.philandro.anydesk"),
+                category: .applicationCache,
+                description: "AnyDesk cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.youqu.todesk.mac"),
+                category: .applicationCache,
+                description: "ToDesk cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.oray.sunlogin.client"),
+                category: .applicationCache,
+                description: "Sunlogin cache"
+            ),
+
+            // Launchers
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.runningwithcrayons.Alfred"),
+                category: .applicationCache,
+                description: "Alfred cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.macpaw.site.theunarchiver"),
+                category: .applicationCache,
+                description: "The Unarchiver cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.raycast.macos"),
+                category: .applicationCache,
+                description: "Raycast cache"
+            ),
+
+            // Media (additional)
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.kugou.KugouMusic"),
+                category: .applicationCache,
+                description: "Kugou Music cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.kuwo.KuwoMusic"),
+                category: .applicationCache,
+                description: "Kuwo Music cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.apple.TV"),
+                category: .applicationCache,
+                description: "Apple TV cache"
+            ),
+
+            // Gaming (additional)
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.ea.origin"),
+                category: .applicationCache,
+                description: "EA Origin cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.gog.galaxy"),
+                category: .applicationCache,
+                description: "GOG Galaxy cache"
+            ),
+
+            // Translation (additional)
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.heaoup.bobtranslate"),
+                category: .applicationCache,
+                description: "Bob Translation cache"
+            ),
+
+            // Screenshot (additional)
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/net.xnipapp.xnip"),
+                category: .applicationCache,
+                description: "Xnip cache"
+            ),
+
+            // Database GUI Tools
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.sequel-ace.sequel-ace"),
+                category: .applicationCache,
+                description: "Sequel Ace cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.sequelpro.SequelPro"),
+                category: .applicationCache,
+                description: "Sequel Pro cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.dbeaver.product.enterprise"),
+                category: .applicationCache,
+                description: "DBeaver cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.tinyapp.TablePlus"),
+                category: .applicationCache,
+                description: "TablePlus cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.qbix.RedisInsight"),
+                category: .applicationCache,
+                description: "Redis Insight cache"
+            ),
+
+            // API / Debug Tools
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.postmanlabs.mac"),
+                category: .applicationCache,
+                description: "Postman cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.Kong.insomnia"),
+                category: .applicationCache,
+                description: "Insomnia cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.luckymarmot.Paw"),
+                category: .applicationCache,
+                description: "Paw/RapidAPI cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.xk72.Charles"),
+                category: .applicationCache,
+                description: "Charles Proxy cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.proxyman.NSProxy"),
+                category: .applicationCache,
+                description: "Proxyman cache"
+            ),
+
+            // Misc
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.github.GitHubClient"),
+                category: .applicationCache,
+                description: "GitHub Desktop cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/io.sentry"),
+                category: .applicationCache,
+                description: "Sentry cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/com.mongodb.compass"),
+                category: .applicationCache,
+                description: "MongoDB Compass cache"
+            ),
         ]
     }
 
@@ -503,6 +750,29 @@ enum CachePaths {
                 path: homeDirectory.appendingPathComponent("Library/Application Support/Sublime Text/Cache"),
                 category: .codeEditorCache,
                 description: "Sublime Text data cache"
+            ),
+            // Zed
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/Zed"),
+                category: .codeEditorCache,
+                description: "Zed editor cache"
+            ),
+            // VS Code additional caches
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Application Support/Code/Cache/Cache_Data"),
+                category: .codeEditorCache,
+                description: "VS Code cache data"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Application Support/Code/GPUCache"),
+                category: .codeEditorCache,
+                description: "VS Code GPU cache"
+            ),
+            // JetBrains IDEs
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/JetBrains"),
+                category: .codeEditorCache,
+                description: "JetBrains IDE caches"
             ),
         ]
     }
@@ -617,6 +887,224 @@ enum CachePaths {
                 category: .devToolCache,
                 description: "Maven wrapper cache"
             ),
+
+            // Python ecosystem
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".pyenv/cache"),
+                category: .devToolCache,
+                description: "pyenv cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/uv"),
+                category: .devToolCache,
+                description: "uv package manager cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/ruff"),
+                category: .devToolCache,
+                description: "Ruff linter cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/mypy"),
+                category: .devToolCache,
+                description: "mypy type checker cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".jupyter/runtime"),
+                category: .devToolCache,
+                description: "Jupyter runtime"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/huggingface"),
+                category: .devToolCache,
+                description: "Hugging Face models cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/torch"),
+                category: .devToolCache,
+                description: "PyTorch cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/tensorflow"),
+                category: .devToolCache,
+                description: "TensorFlow cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".conda/pkgs"),
+                category: .devToolCache,
+                description: "Conda package cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("anaconda3/pkgs"),
+                category: .devToolCache,
+                description: "Anaconda package cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("miniconda3/pkgs"),
+                category: .devToolCache,
+                description: "Miniconda package cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/wandb"),
+                category: .devToolCache,
+                description: "Weights & Biases cache"
+            ),
+
+            // Docker additional
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".docker/buildx/cache"),
+                category: .devToolCache,
+                description: "Docker buildx cache"
+            ),
+
+            // Cloud CLI
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".kube/cache"),
+                category: .devToolCache,
+                description: "Kubernetes CLI cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".aws/cli/cache"),
+                category: .devToolCache,
+                description: "AWS CLI cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".config/gcloud/logs"),
+                category: .devToolCache,
+                description: "Google Cloud CLI logs"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".azure/logs"),
+                category: .devToolCache,
+                description: "Azure CLI logs"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".terraform.d/plugin-cache"),
+                category: .devToolCache,
+                description: "Terraform plugin cache"
+            ),
+
+            // Frontend build caches
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/typescript"),
+                category: .devToolCache,
+                description: "TypeScript cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/electron"),
+                category: .devToolCache,
+                description: "Electron cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/node-gyp"),
+                category: .devToolCache,
+                description: "node-gyp cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".turbo"),
+                category: .devToolCache,
+                description: "Turborepo cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/webpack"),
+                category: .devToolCache,
+                description: "Webpack cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".parcel-cache"),
+                category: .devToolCache,
+                description: "Parcel bundler cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/eslint"),
+                category: .devToolCache,
+                description: "ESLint cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/prettier"),
+                category: .devToolCache,
+                description: "Prettier cache"
+            ),
+
+            // JVM / sbt / Ivy
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".sbt"),
+                category: .devToolCache,
+                description: "sbt build tool cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".ivy2/cache"),
+                category: .devToolCache,
+                description: "Ivy dependency cache"
+            ),
+
+            // PHP Composer
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".composer/cache"),
+                category: .devToolCache,
+                description: "Composer cache"
+            ),
+            // .NET NuGet
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".nuget/packages"),
+                category: .devToolCache,
+                description: "NuGet package cache"
+            ),
+            // Bazel
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/bazel"),
+                category: .devToolCache,
+                description: "Bazel build cache"
+            ),
+            // Zig
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/zig"),
+                category: .devToolCache,
+                description: "Zig cache"
+            ),
+            // Deno
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent("Library/Caches/deno"),
+                category: .devToolCache,
+                description: "Deno cache"
+            ),
+            // Elixir Hex
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".hex/cache"),
+                category: .devToolCache,
+                description: "Elixir Hex cache"
+            ),
+            // Haskell Cabal
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cabal/packages"),
+                category: .devToolCache,
+                description: "Haskell Cabal cache"
+            ),
+            // OCaml opam
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".opam/download-cache"),
+                category: .devToolCache,
+                description: "OCaml opam download cache"
+            ),
+
+            // Network caches
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/curl"),
+                category: .devToolCache,
+                description: "curl cache"
+            ),
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/wget"),
+                category: .devToolCache,
+                description: "wget cache"
+            ),
+
+            // pre-commit
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".cache/pre-commit"),
+                category: .devToolCache,
+                description: "pre-commit cache"
+            ),
         ]
     }
 
@@ -643,6 +1131,18 @@ enum CachePaths {
                 path: homeDirectory.appendingPathComponent(".wget-hsts"),
                 category: .shellCache,
                 description: "Wget HSTS data"
+            ),
+            // Oh My Zsh cache
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".oh-my-zsh/cache"),
+                category: .shellCache,
+                description: "Oh My Zsh cache"
+            ),
+            // Fish shell
+            CacheLocation(
+                path: homeDirectory.appendingPathComponent(".local/share/fish/generated_completions"),
+                category: .shellCache,
+                description: "Fish completions cache"
             ),
         ]
     }
@@ -796,6 +1296,40 @@ enum CachePaths {
                 path: homeDirectory.appendingPathComponent("Library/Saved Application State"),
                 category: .systemLevel,
                 description: "App saved states"
+            ),
+            // macOS Install Data
+            CacheLocation(
+                path: URL(fileURLWithPath: "/macOS Install Data"),
+                category: .systemLevel,
+                description: "macOS install data (stale)"
+            ),
+            // Code signing clone caches
+            CacheLocation(
+                path: URL(fileURLWithPath: "/private/var/db/diagnostics"),
+                category: .systemLevel,
+                description: "System diagnostic database"
+            ),
+            CacheLocation(
+                path: URL(fileURLWithPath: "/private/var/db/DiagnosticPipeline"),
+                category: .systemLevel,
+                description: "Diagnostic pipeline data"
+            ),
+            CacheLocation(
+                path: URL(fileURLWithPath: "/private/var/db/reportmemoryexception"),
+                category: .systemLevel,
+                description: "Memory exception reports"
+            ),
+            // Simulator volumes
+            CacheLocation(
+                path: URL(fileURLWithPath: "/Library/Developer/CoreSimulator/Volumes"),
+                category: .systemLevel,
+                description: "Simulator runtime volumes"
+            ),
+            // Rosetta 2 cache (Apple Silicon only)
+            CacheLocation(
+                path: URL(fileURLWithPath: "/Library/Apple/usr/share/rosetta"),
+                category: .systemLevel,
+                description: "Rosetta 2 cache"
             ),
         ]
     }

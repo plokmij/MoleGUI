@@ -217,6 +217,150 @@ actor SystemOptimizer {
         )
     }
 
+    // MARK: - Spotlight Rebuild
+
+    func rebuildSpotlight() async -> OptimizationResult {
+        let r1 = runCommand("/usr/bin/mdutil", arguments: ["-E", "/"])
+        return OptimizationResult(
+            action: "Rebuild Spotlight Index",
+            success: r1,
+            message: r1 ? "Spotlight index rebuild initiated" : "Failed to rebuild Spotlight (may require admin)"
+        )
+    }
+
+    // MARK: - Bluetooth Restart
+
+    func restartBluetooth() async -> OptimizationResult {
+        // Check if any HID or audio devices are connected via Bluetooth
+        let btCheck = runCommandOutput("/usr/sbin/system_profiler", arguments: ["SPBluetoothDataType", "-detailLevel", "mini"])
+
+        // Simple heuristic: skip if audio devices are actively connected
+        if btCheck.contains("Connected: Yes") && (btCheck.contains("Audio") || btCheck.contains("HID")) {
+            return OptimizationResult(
+                action: "Restart Bluetooth",
+                success: false,
+                message: "Skipped: active Bluetooth HID/audio devices detected"
+            )
+        }
+
+        let success = runCommand("/usr/bin/killall", arguments: ["-HUP", "bluetoothd"])
+        return OptimizationResult(
+            action: "Restart Bluetooth",
+            success: success,
+            message: success ? "Bluetooth daemon restarted" : "Failed to restart Bluetooth (may require admin)"
+        )
+    }
+
+    // MARK: - Security Fixes
+
+    func enableFirewall() async -> OptimizationResult {
+        let success = runCommand("/usr/libexec/ApplicationFirewall/socketfilterfw", arguments: ["--setglobalstate", "on"])
+        return OptimizationResult(
+            action: "Enable Firewall",
+            success: success,
+            message: success ? "Firewall enabled" : "Failed to enable firewall (requires admin)"
+        )
+    }
+
+    func enableGatekeeper() async -> OptimizationResult {
+        let success = runCommand("/usr/sbin/spctl", arguments: ["--master-enable"])
+        return OptimizationResult(
+            action: "Enable Gatekeeper",
+            success: success,
+            message: success ? "Gatekeeper enabled" : "Failed to enable Gatekeeper (requires admin)"
+        )
+    }
+
+    func enableTouchIdForSudo() async -> OptimizationResult {
+        // Check for macOS Sonoma+ sudo_local support
+        let sudoLocalPath = "/etc/pam.d/sudo_local"
+        let sudoPath = "/etc/pam.d/sudo"
+
+        // Check if already enabled
+        if let content = try? String(contentsOfFile: sudoPath, encoding: .utf8),
+           content.contains("pam_tid.so") {
+            return OptimizationResult(
+                action: "Touch ID for Sudo",
+                success: true,
+                message: "Touch ID for sudo is already enabled"
+            )
+        }
+
+        if let content = try? String(contentsOfFile: sudoLocalPath, encoding: .utf8),
+           content.contains("pam_tid.so") {
+            return OptimizationResult(
+                action: "Touch ID for Sudo",
+                success: true,
+                message: "Touch ID for sudo is already enabled (via sudo_local)"
+            )
+        }
+
+        // For Sonoma+, use sudo_local
+        if fileManager.fileExists(atPath: "/etc/pam.d/sudo_local.template") ||
+           Foundation.ProcessInfo.processInfo.operatingSystemVersion.majorVersion >= 14 {
+            let content = "auth       sufficient     pam_tid.so\n"
+            do {
+                try content.write(toFile: sudoLocalPath, atomically: true, encoding: .utf8)
+                return OptimizationResult(
+                    action: "Touch ID for Sudo",
+                    success: true,
+                    message: "Touch ID for sudo enabled via sudo_local"
+                )
+            } catch {
+                return OptimizationResult(
+                    action: "Touch ID for Sudo",
+                    success: false,
+                    message: "Failed: requires admin privileges"
+                )
+            }
+        }
+
+        return OptimizationResult(
+            action: "Touch ID for Sudo",
+            success: false,
+            message: "Manual configuration required for pre-Sonoma macOS"
+        )
+    }
+
+    // MARK: - macOS Update Check
+
+    func checkForMacOSUpdates() async -> OptimizationResult {
+        let output = runCommandOutput("/usr/sbin/softwareupdate", arguments: ["-l", "--no-scan"])
+
+        if output.contains("No new software available") || output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+            return OptimizationResult(
+                action: "macOS Update Check",
+                success: true,
+                message: "macOS is up to date"
+            )
+        }
+
+        // Extract update names
+        let lines = output.components(separatedBy: .newlines)
+        let updates = lines.filter { $0.contains("*") || $0.contains("Label:") }
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+
+        let updateList = updates.isEmpty ? "Updates available" : updates.prefix(3).joined(separator: ", ")
+        return OptimizationResult(
+            action: "macOS Update Check",
+            success: false,
+            message: updateList
+        )
+    }
+
+    // MARK: - Icon Services Cache
+
+    func refreshIconServices() async -> OptimizationResult {
+        let r1 = runCommand("/usr/bin/killall", arguments: ["Dock"])
+        let r2 = runCommand("/usr/bin/killall", arguments: ["-KILL", "lsd"])
+        let success = r1 || r2
+        return OptimizationResult(
+            action: "Refresh Icon Services",
+            success: success,
+            message: success ? "Icon services cache refreshed" : "Failed to refresh icon services"
+        )
+    }
+
     // MARK: - Helpers
 
     @discardableResult
@@ -249,6 +393,25 @@ actor SystemOptimizer {
             return process.terminationStatus == 0
         } catch {
             return false
+        }
+    }
+
+    private func runCommandOutput(_ path: String, arguments: [String]) -> String {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = arguments
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let data = pipe.fileHandleForReading.readDataToEndOfFile()
+            return String(data: data, encoding: .utf8) ?? ""
+        } catch {
+            return ""
         }
     }
 }

@@ -7,6 +7,8 @@ actor SecurityChecker {
         var gatekeeperEnabled: Bool = false
         var sipEnabled: Bool = false
         var touchIdForSudo: Bool = false
+        var thirdPartyFirewall: String? = nil
+        var macOSUpdateAvailable: Bool = false
 
         var allSecure: Bool {
             fileVaultEnabled && firewallEnabled && gatekeeperEnabled && sipEnabled
@@ -15,7 +17,7 @@ actor SecurityChecker {
         var securityScore: Int {
             var score = 0
             if fileVaultEnabled { score += 25 }
-            if firewallEnabled { score += 25 }
+            if firewallEnabled || thirdPartyFirewall != nil { score += 25 }
             if gatekeeperEnabled { score += 25 }
             if sipEnabled { score += 25 }
             return score
@@ -42,6 +44,7 @@ actor SecurityChecker {
         status.gatekeeperEnabled = checkGatekeeper()
         status.sipEnabled = checkSIP()
         status.touchIdForSudo = checkTouchIdSudo()
+        status.thirdPartyFirewall = detectThirdPartyFirewall()
 
         return status
     }
@@ -80,9 +83,39 @@ actor SecurityChecker {
     }
 
     private func checkTouchIdSudo() -> Bool {
-        let sudoPath = "/etc/pam.d/sudo"
-        guard let content = try? String(contentsOfFile: sudoPath, encoding: .utf8) else { return false }
-        return content.contains("pam_tid.so")
+        // Check both sudo and sudo_local (Sonoma+)
+        for path in ["/etc/pam.d/sudo", "/etc/pam.d/sudo_local"] {
+            if let content = try? String(contentsOfFile: path, encoding: .utf8),
+               content.contains("pam_tid.so") {
+                return true
+            }
+        }
+        return false
+    }
+
+    private func detectThirdPartyFirewall() -> String? {
+        let firewalls: [(name: String, bundleId: String)] = [
+            ("Little Snitch", "at.obdev.LittleSnitchConfiguration"),
+            ("LuLu", "com.objective-see.lulu.app"),
+            ("Radio Silence", "com.radiosilenceapp.client"),
+            ("Hands Off!", "com.metakine.handsoff"),
+            ("Murus", "com.murusfirewall.murus"),
+        ]
+
+        let fm = FileManager.default
+        for firewall in firewalls {
+            // Check if the app exists in /Applications
+            let appPath = "/Applications/\(firewall.name).app"
+            if fm.fileExists(atPath: appPath) {
+                return firewall.name
+            }
+            // Also check running processes
+            let output = runCommandOutput("/usr/bin/pgrep", arguments: ["-f", firewall.bundleId])
+            if !output.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                return firewall.name
+            }
+        }
+        return nil
     }
 
     // MARK: - Health Checks

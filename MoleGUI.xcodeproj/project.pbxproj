@@ -50,6 +50,7 @@
 		AAA00042 /* InstallerItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00042; };
 		AAA00043 /* OptimizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00043; };
 		AAA00044 /* InstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00044; };
+		AAA00045 /* OperationLogger.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00045; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -98,6 +99,7 @@
 		BBB00042 /* InstallerItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerItem.swift; sourceTree = "<group>"; };
 		BBB00043 /* OptimizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizerView.swift; sourceTree = "<group>"; };
 		BBB00044 /* InstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerView.swift; sourceTree = "<group>"; };
+		BBB00045 /* OperationLogger.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OperationLogger.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -239,6 +241,7 @@
 				BBB00037 /* InstallerScanner.swift */,
 				BBB00038 /* SystemOptimizer.swift */,
 				BBB00039 /* SecurityChecker.swift */,
+				BBB00045 /* OperationLogger.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -433,6 +436,7 @@
 				AAA00042 /* InstallerItem.swift in Sources */,
 				AAA00043 /* OptimizerView.swift in Sources */,
 				AAA00044 /* InstallerView.swift in Sources */,
+				AAA00045 /* OperationLogger.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

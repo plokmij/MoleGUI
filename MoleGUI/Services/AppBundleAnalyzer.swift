@@ -53,6 +53,9 @@ actor AppBundleAnalyzer {
         return apps.sorted { $0.totalSize > $1.totalSize }
     }
 
+    /// Cache of Homebrew cask names to app names
+    private var brewCaskMap: [String: String]?
+
     private func analyzeAppBundle(at url: URL) async -> InstalledApp? {
         let bundle = Bundle(url: url)
 
@@ -71,8 +74,11 @@ actor AppBundleAnalyzer {
         // Get last used date
         let lastUsed = try? fileManager.attributesOfItem(atPath: url.path)[.modificationDate] as? Date
 
+        // Check if installed via Homebrew cask
+        let caskInfo = detectBrewCask(appName: name)
+
         // Don't scan remnants during initial load - defer to when app is selected
-        let app = InstalledApp(
+        var app = InstalledApp(
             url: url,
             name: name,
             bundleIdentifier: bundleIdentifier,
@@ -81,8 +87,66 @@ actor AppBundleAnalyzer {
             icon: icon,
             lastUsed: lastUsed
         )
+        app.isBrewCask = caskInfo != nil
+        app.brewCaskName = caskInfo
 
         return app
+    }
+
+    /// Detects if an app was installed via Homebrew cask
+    private func detectBrewCask(appName: String) -> String? {
+        // Lazy-load the brew cask map
+        if brewCaskMap == nil {
+            brewCaskMap = loadBrewCaskMap()
+        }
+
+        let lowerName = appName.lowercased()
+        return brewCaskMap?[lowerName]
+    }
+
+    /// Loads map of app name -> cask name from Homebrew Caskroom
+    private func loadBrewCaskMap() -> [String: String] {
+        var map: [String: String] = [:]
+
+        let caskroom = URL(fileURLWithPath: "/opt/homebrew/Caskroom")
+        let altCaskroom = URL(fileURLWithPath: "/usr/local/Caskroom")
+
+        let targetDir = fileManager.fileExists(atPath: caskroom.path) ? caskroom :
+            (fileManager.fileExists(atPath: altCaskroom.path) ? altCaskroom : nil)
+
+        guard let dir = targetDir,
+              let casks = try? fileManager.contentsOfDirectory(at: dir, includingPropertiesForKeys: nil) else {
+            return map
+        }
+
+        for cask in casks {
+            let caskName = cask.lastPathComponent
+            // Map common cask names to app names
+            let appName = caskName.replacingOccurrences(of: "-", with: " ")
+            map[appName.lowercased()] = caskName
+            map[caskName.lowercased()] = caskName
+        }
+
+        return map
+    }
+
+    /// Uninstalls a Homebrew cask app
+    func uninstallBrewCask(_ caskName: String) async throws -> Bool {
+        let brewPath = fileManager.fileExists(atPath: "/opt/homebrew/bin/brew")
+            ? "/opt/homebrew/bin/brew"
+            : "/usr/local/bin/brew"
+
+        guard fileManager.fileExists(atPath: brewPath) else { return false }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: brewPath)
+        process.arguments = ["uninstall", "--cask", caskName]
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        try process.run()
+        process.waitUntilExit()
+        return process.terminationStatus == 0
     }
 
     /// Load remnants for an app on-demand (called when app is selected)

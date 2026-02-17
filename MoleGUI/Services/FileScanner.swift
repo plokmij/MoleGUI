@@ -131,6 +131,12 @@ actor FileScanner {
 
         var results: [CacheCategory: [CacheItem]] = [:]
 
+        // Add sandboxed app caches (generic scan)
+        let sandboxedItems = await scanSandboxedAppCaches()
+        if !sandboxedItems.isEmpty {
+            results[.applicationCache] = (results[.applicationCache] ?? []) + sandboxedItems
+        }
+
         let totalLocations = locations.count
         var scannedLocations = 0
 
@@ -190,6 +196,157 @@ actor FileScanner {
         return results.map { category, items in
             CacheCategoryResult(category: category, items: items)
         }.sorted { $0.totalSize > $1.totalSize }
+    }
+
+    // MARK: - Sandboxed App Caches
+
+    /// Scans ~/Library/Containers/*/Data/Library/Caches for sandboxed app caches
+    private func scanSandboxedAppCaches() async -> [CacheItem] {
+        let containersDir = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Containers")
+        var items: [CacheItem] = []
+
+        guard let containers = try? FileManager.default.contentsOfDirectory(at: containersDir, includingPropertiesForKeys: nil) else {
+            return []
+        }
+
+        // Collect known cache paths so we don't double-count
+        let knownPaths = Set(CachePaths.allLocations.map { $0.path.path })
+
+        for container in containers {
+            guard !isCancelled else { break }
+
+            let cachesDir = container
+                .appendingPathComponent("Data/Library/Caches")
+
+            guard FileManager.default.fileExists(atPath: cachesDir.path) else { continue }
+
+            // Skip if already covered by explicit cache paths
+            if knownPaths.contains(cachesDir.path) { continue }
+
+            let size = try? await calculateDirectorySize(cachesDir)
+            guard let size = size, size > 100_000 else { continue } // Skip tiny caches
+
+            let bundleId = container.lastPathComponent
+            let displayName = bundleId.split(separator: ".").last.map(String.init) ?? bundleId
+
+            let item = CacheItem(
+                url: cachesDir,
+                name: bundleId,
+                size: size,
+                category: .applicationCache,
+                lastModified: try? FileManager.default.attributesOfItem(atPath: cachesDir.path)[.modificationDate] as? Date,
+                displayName: displayName,
+                subtitle: "Sandboxed"
+            )
+            items.append(item)
+        }
+
+        return items
+    }
+
+    // MARK: - Homebrew Integration
+
+    /// Runs `brew cleanup` and `brew autoremove` with a 7-day cooldown
+    func runBrewCleanup() async -> (success: Bool, message: String) {
+        let cooldownFile = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent(".config/mole/brew_cleanup_timestamp")
+
+        // Check 7-day cooldown
+        if FileManager.default.fileExists(atPath: cooldownFile.path),
+           let content = try? String(contentsOf: cooldownFile, encoding: .utf8),
+           let timestamp = Double(content.trimmingCharacters(in: .whitespacesAndNewlines)) {
+            let lastRun = Date(timeIntervalSince1970: timestamp)
+            let daysSince = Calendar.current.dateComponents([.day], from: lastRun, to: Date()).day ?? 0
+            if daysSince < 7 {
+                return (true, "Homebrew cleanup ran \(daysSince) day(s) ago (7-day cooldown)")
+            }
+        }
+
+        // Check if brew is installed
+        let brewPath = FileManager.default.fileExists(atPath: "/opt/homebrew/bin/brew")
+            ? "/opt/homebrew/bin/brew"
+            : "/usr/local/bin/brew"
+        guard FileManager.default.fileExists(atPath: brewPath) else {
+            return (false, "Homebrew not installed")
+        }
+
+        let r1 = runCommand(brewPath, arguments: ["cleanup", "--prune=all"])
+        let r2 = runCommand(brewPath, arguments: ["autoremove"])
+
+        // Write timestamp
+        let configDir = cooldownFile.deletingLastPathComponent()
+        try? FileManager.default.createDirectory(at: configDir, withIntermediateDirectories: true)
+        try? String(Date().timeIntervalSince1970).write(to: cooldownFile, atomically: true, encoding: .utf8)
+
+        if r1 || r2 {
+            return (true, "Homebrew cleanup and autoremove complete")
+        }
+        return (false, "Homebrew cleanup failed")
+    }
+
+    @discardableResult
+    private func runCommand(_ path: String, arguments: [String]) -> Bool {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: path)
+        process.arguments = arguments
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            return process.terminationStatus == 0
+        } catch {
+            return false
+        }
+    }
+
+    // MARK: - .DS_Store Cleanup
+
+    /// Recursively removes .DS_Store files from home directory, with exclusions
+    func cleanDSStoreFiles(in directory: URL? = nil) async -> (count: Int, size: Int64) {
+        let targetDir = directory ?? FileManager.default.homeDirectoryForCurrentUser
+        var removedCount = 0
+        var removedSize: Int64 = 0
+
+        let excludedDirs: Set<String> = [
+            "MobileSync",
+            "Developer",
+            "node_modules",
+            ".git",
+            ".Trash",
+            "Library/Developer",
+        ]
+
+        guard let enumerator = FileManager.default.enumerator(
+            at: targetDir,
+            includingPropertiesForKeys: [.fileSizeKey, .isDirectoryKey],
+            options: [],
+            errorHandler: { _, _ in true }
+        ) else { return (0, 0) }
+
+        for case let fileURL as URL in enumerator {
+            guard !isCancelled else { break }
+
+            let name = fileURL.lastPathComponent
+
+            // Skip excluded directories
+            if excludedDirs.contains(name) {
+                enumerator.skipDescendants()
+                continue
+            }
+
+            if name == ".DS_Store" {
+                let size = (try? fileURL.resourceValues(forKeys: [.fileSizeKey]).fileSize).flatMap(Int64.init) ?? 0
+                if (try? FileManager.default.removeItem(at: fileURL)) != nil {
+                    removedCount += 1
+                    removedSize += size
+                }
+            }
+        }
+
+        return (removedCount, removedSize)
     }
 
     /// Scans iOS Simulator devices and returns individual CacheItems for each device
@@ -378,6 +535,67 @@ actor FileScanner {
         return nil
     }
 
+    // MARK: - Unavailable Simulator Cleanup
+
+    /// Runs `xcrun simctl delete unavailable` to remove unavailable simulator runtimes
+    func deleteUnavailableSimulators() async -> (success: Bool, message: String) {
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/xcrun")
+        process.arguments = ["simctl", "delete", "unavailable"]
+
+        let pipe = Pipe()
+        process.standardOutput = pipe
+        process.standardError = pipe
+
+        do {
+            try process.run()
+            process.waitUntilExit()
+            let success = process.terminationStatus == 0
+            return (success, success ? "Removed unavailable simulators" : "Failed to remove unavailable simulators")
+        } catch {
+            return (false, "xcrun simctl not available")
+        }
+    }
+
+    // MARK: - Old macOS Installer Apps
+
+    /// Scans for old macOS installer apps (14+ days old)
+    func scanOldMacOSInstallers() async -> [CacheItem] {
+        let applicationsDir = URL(fileURLWithPath: "/Applications")
+        var items: [CacheItem] = []
+
+        guard let contents = try? FileManager.default.contentsOfDirectory(
+            at: applicationsDir,
+            includingPropertiesForKeys: [.contentModificationDateKey, .isDirectoryKey]
+        ) else { return [] }
+
+        let cutoff = Calendar.current.date(byAdding: .day, value: -14, to: Date()) ?? Date()
+
+        for item in contents {
+            let name = item.lastPathComponent
+            guard name.hasPrefix("Install macOS") && name.hasSuffix(".app") else { continue }
+
+            if let values = try? item.resourceValues(forKeys: [.contentModificationDateKey]),
+               let modDate = values.contentModificationDate,
+               modDate < cutoff {
+                let size = try? await calculateDirectorySize(item)
+                guard let size = size, size > 0 else { continue }
+
+                let cacheItem = CacheItem(
+                    url: item,
+                    name: name,
+                    size: size,
+                    category: .systemLevel,
+                    lastModified: modDate,
+                    displayName: name.replacingOccurrences(of: ".app", with: "")
+                )
+                items.append(cacheItem)
+            }
+        }
+
+        return items
+    }
+
     func scanForProjectArtifacts(in directory: URL, progress: @escaping (String, Int) -> Void) async throws -> [ProjectArtifact] {
         reset()
 
@@ -386,14 +604,18 @@ actor FileScanner {
 
         let artifactNames = Set(ArtifactType.allCases.map { $0.rawValue })
 
+        // Don't skip hidden files since many artifact types start with dot
         guard let enumerator = fileManager.enumerator(
             at: directory,
             includingPropertiesForKeys: [.isDirectoryKey, .contentModificationDateKey],
-            options: [.skipsHiddenFiles],
+            options: [],
             errorHandler: { _, _ in true }
         ) else {
             return []
         }
+
+        // Directories to skip entirely (not project dirs)
+        let skipDirs: Set<String> = [".git", ".svn", ".hg", "Library", ".Trash", ".cache", ".npm", ".cargo"]
 
         for case let fileURL as URL in enumerator {
             guard !isCancelled else {
@@ -401,6 +623,12 @@ actor FileScanner {
             }
 
             let name = fileURL.lastPathComponent
+
+            // Skip non-project system directories
+            if skipDirs.contains(name) {
+                enumerator.skipDescendants()
+                continue
+            }
 
             // Skip scanning inside artifact directories
             if artifactNames.contains(name) {
