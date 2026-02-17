@@ -98,8 +98,8 @@ struct PurgeView: View {
 
             ToolbarItemGroup(placement: .primaryAction) {
                 if !viewModel.artifacts.isEmpty {
-                    Button("Purge Selected") {
-                        viewModel.purgeSelected()
+                    Button("Purge Selected", role: .destructive) {
+                        viewModel.showPurgeConfirmation = true
                     }
                     .disabled(viewModel.selectedArtifacts.isEmpty || viewModel.isPurging)
                 } else {
@@ -108,6 +108,14 @@ struct PurgeView: View {
                     }
                 }
             }
+        }
+        .alert("Purge \(viewModel.selectedArtifacts.count) artifacts?", isPresented: $viewModel.showPurgeConfirmation) {
+            Button("Cancel", role: .cancel) {}
+            Button("Purge", role: .destructive) {
+                viewModel.purgeSelected()
+            }
+        } message: {
+            Text("This will move \(viewModel.selectedArtifacts.count) items (\(viewModel.formattedSelectedSize)) to Trash.")
         }
         .alert("Error", isPresented: .constant(viewModel.error != nil)) {
             Button("OK") {

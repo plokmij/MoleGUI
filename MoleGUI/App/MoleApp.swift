@@ -47,8 +47,12 @@ struct ContentView: View {
                 CleanerView()
             case .uninstaller:
                 UninstallerView()
+            case .installer:
+                InstallerView()
             case .analyzer:
                 AnalyzerView()
+            case .optimizer:
+                OptimizerView()
             case .monitor:
                 MonitorView()
             case .purge:

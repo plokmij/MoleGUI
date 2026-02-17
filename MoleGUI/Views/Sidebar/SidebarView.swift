@@ -14,7 +14,7 @@ struct SidebarView: View {
             }
 
             Section("Tools") {
-                ForEach([NavigationTab.cleaner, .uninstaller, .analyzer, .purge], id: \.self) { tab in
+                ForEach([NavigationTab.cleaner, .uninstaller, .installer, .analyzer, .purge], id: \.self) { tab in
                     NavigationLink(value: tab) {
                         Label(tab.rawValue, systemImage: tab.icon)
                     }
@@ -22,7 +22,7 @@ struct SidebarView: View {
             }
 
             Section("System") {
-                ForEach([NavigationTab.monitor], id: \.self) { tab in
+                ForEach([NavigationTab.optimizer, .monitor], id: \.self) { tab in
                     NavigationLink(value: tab) {
                         Label(tab.rawValue, systemImage: tab.icon)
                     }

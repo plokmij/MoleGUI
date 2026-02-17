@@ -10,6 +10,8 @@ final class ViewModelContainer: ObservableObject {
     let analyzerViewModel = AnalyzerViewModel()
     let purgeViewModel = PurgeViewModel()
     let monitorViewModel = MonitorViewModel()
+    let optimizerViewModel = OptimizerViewModel()
+    let installerViewModel = InstallerViewModel()
 
     private init() {}
 }

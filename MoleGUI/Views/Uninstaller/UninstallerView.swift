@@ -74,10 +74,10 @@ struct UninstallerView: View {
         }
         .alert("Uninstall \(viewModel.selectedApp?.name ?? "")?", isPresented: $viewModel.showConfirmation) {
             Button("Cancel", role: .cancel) {}
-            Button("Remove App Only") {
+            Button("App Only", role: .destructive) {
                 viewModel.uninstallSelectedApp(includeRemnants: false)
             }
-            Button("Remove All", role: .destructive) {
+            Button("Complete Removal", role: .destructive) {
                 viewModel.uninstallSelectedApp(includeRemnants: true)
             }
         } message: {
@@ -87,10 +87,10 @@ struct UninstallerView: View {
         }
         .alert("Uninstall \(viewModel.selectedAppIds.count) apps?", isPresented: $viewModel.showBulkConfirmation) {
             Button("Cancel", role: .cancel) {}
-            Button("Remove Apps Only") {
+            Button("Apps Only", role: .destructive) {
                 viewModel.uninstallSelectedApps(includeRemnants: false)
             }
-            Button("Remove All", role: .destructive) {
+            Button("Complete Removal", role: .destructive) {
                 viewModel.uninstallSelectedApps(includeRemnants: true)
             }
         } message: {

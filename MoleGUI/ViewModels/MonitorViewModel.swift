@@ -36,6 +36,22 @@ class MonitorViewModel: ObservableObject {
         systemMonitor.networkHistory.downloadSamples
     }
 
+    var diskIOReadHistory: [Int64] {
+        systemMonitor.diskIOHistory.readSamples
+    }
+
+    var diskIOWriteHistory: [Int64] {
+        systemMonitor.diskIOHistory.writeSamples
+    }
+
+    var perCoreCPU: [Double] {
+        systemMonitor.stats.perCoreCPU
+    }
+
+    var topProcesses: [TopProcess] {
+        systemMonitor.stats.topProcesses
+    }
+
     init() {
         // Forward updates from systemMonitor
         systemMonitor.objectWillChange

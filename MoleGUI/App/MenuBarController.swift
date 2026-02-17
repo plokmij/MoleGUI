@@ -66,6 +66,18 @@ final class MenuBarController: NSObject {
             icon: "folder.badge.minus"
         ))
 
+        menu.addItem(createMenuItem(
+            title: "Optimize System",
+            action: #selector(optimizeSystem),
+            icon: "bolt.fill"
+        ))
+
+        menu.addItem(createMenuItem(
+            title: "Find Installer Files",
+            action: #selector(findInstallers),
+            icon: "shippingbox"
+        ))
+
         menu.addItem(NSMenuItem.separator())
 
         // Show main window
@@ -161,6 +173,23 @@ final class MenuBarController: NSObject {
         navigateToTabAndShowWindow(.purge)
         Task { @MainActor in
             ViewModelContainer.shared.purgeViewModel.startScan()
+        }
+    }
+
+    @objc private func optimizeSystem() {
+        navigateToTabAndShowWindow(.optimizer)
+        Task { @MainActor in
+            ViewModelContainer.shared.optimizerViewModel.checkStatus()
+        }
+    }
+
+    @objc private func findInstallers() {
+        navigateToTabAndShowWindow(.installer)
+        Task { @MainActor in
+            let vm = ViewModelContainer.shared.installerViewModel
+            if vm.items.isEmpty {
+                vm.startScan()
+            }
         }
     }
 
