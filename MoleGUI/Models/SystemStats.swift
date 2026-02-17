@@ -13,6 +13,20 @@ struct SystemStats {
     var isCharging: Bool = false
     var uptime: TimeInterval = 0
 
+    // New fields
+    var cpuLoadAverage: (one: Double, five: Double, fifteen: Double) = (0, 0, 0)
+    var perCoreCPU: [Double] = []
+    var gpuName: String = ""
+    var batteryCycleCount: Int = 0
+    var batteryTemperature: Double = 0
+    var batteryCondition: String = "Unknown"
+    var batteryIsPresent: Bool = false
+    var fanRPM: [Int] = []
+    var topProcesses: [TopProcess] = []
+    var macModel: String = ""
+    var chipName: String = ""
+    var totalRAM: String = ""
+
     var formattedMemoryUsed: String { ByteFormatter.format(memoryUsed) }
     var formattedMemoryTotal: String { ByteFormatter.format(memoryTotal) }
     var formattedDiskRead: String { ByteFormatter.formatSpeed(diskReadSpeed) }
@@ -32,6 +46,14 @@ struct SystemStats {
         } else {
             return "\(minutes)m"
         }
+    }
+
+    var formattedLoadAverage: String {
+        String(format: "%.2f / %.2f / %.2f", cpuLoadAverage.one, cpuLoadAverage.five, cpuLoadAverage.fifteen)
+    }
+
+    var formattedBatteryTemp: String {
+        String(format: "%.1f\u{00B0}C", batteryTemperature)
     }
 
     var healthScore: Int {
@@ -60,6 +82,14 @@ struct SystemStats {
         default: return "Poor"
         }
     }
+}
+
+struct TopProcess: Identifiable {
+    let id = UUID()
+    let name: String
+    let pid: Int
+    let cpuPercent: Double
+    let memoryMB: Double
 }
 
 struct CPUHistory {
@@ -97,6 +127,21 @@ struct NetworkHistory {
         if uploadSamples.count > maxSamples {
             uploadSamples.removeFirst()
             downloadSamples.removeFirst()
+        }
+    }
+}
+
+struct DiskIOHistory {
+    var readSamples: [Int64] = []
+    var writeSamples: [Int64] = []
+    let maxSamples = 60
+
+    mutating func addSample(read: Int64, write: Int64) {
+        readSamples.append(read)
+        writeSamples.append(write)
+        if readSamples.count > maxSamples {
+            readSamples.removeFirst()
+            writeSamples.removeFirst()
         }
     }
 }

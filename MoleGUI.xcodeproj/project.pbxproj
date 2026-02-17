@@ -41,6 +41,15 @@
 		AAA00029 /* AppRemnantPaths.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00029; };
 		AAA00030 /* Whitelist.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00030; };
 		AAA00031 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = BBB00031; };
+		AAA00036 /* OrphanDetector.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00036; };
+		AAA00037 /* InstallerScanner.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00037; };
+		AAA00038 /* SystemOptimizer.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00038; };
+		AAA00039 /* SecurityChecker.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00039; };
+		AAA00040 /* OptimizerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00040; };
+		AAA00041 /* InstallerViewModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00041; };
+		AAA00042 /* InstallerItem.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00042; };
+		AAA00043 /* OptimizerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00043; };
+		AAA00044 /* InstallerView.swift in Sources */ = {isa = PBXBuildFile; fileRef = BBB00044; };
 /* End PBXBuildFile section */
 
 /* Begin PBXFileReference section */
@@ -80,6 +89,15 @@
 		BBB00033 /* ViewModelContainer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ViewModelContainer.swift; sourceTree = "<group>"; };
 		BBB00034 /* AppDelegate.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppDelegate.swift; sourceTree = "<group>"; };
 		BBB00035 /* MenuBarController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MenuBarController.swift; sourceTree = "<group>"; };
+		BBB00036 /* OrphanDetector.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OrphanDetector.swift; sourceTree = "<group>"; };
+		BBB00037 /* InstallerScanner.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerScanner.swift; sourceTree = "<group>"; };
+		BBB00038 /* SystemOptimizer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemOptimizer.swift; sourceTree = "<group>"; };
+		BBB00039 /* SecurityChecker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SecurityChecker.swift; sourceTree = "<group>"; };
+		BBB00040 /* OptimizerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizerViewModel.swift; sourceTree = "<group>"; };
+		BBB00041 /* InstallerViewModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerViewModel.swift; sourceTree = "<group>"; };
+		BBB00042 /* InstallerItem.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerItem.swift; sourceTree = "<group>"; };
+		BBB00043 /* OptimizerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OptimizerView.swift; sourceTree = "<group>"; };
+		BBB00044 /* InstallerView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstallerView.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFrameworksBuildPhase section */
@@ -140,6 +158,8 @@
 				DDD00009 /* Monitor */,
 				DDD00016 /* Purge */,
 				DDD00017 /* Settings */,
+				DDD00018 /* Optimizer */,
+				DDD00019 /* Installer */,
 			);
 			path = Views;
 			sourceTree = "<group>";
@@ -200,6 +220,8 @@
 				BBB00013 /* AnalyzerViewModel.swift */,
 				BBB00014 /* MonitorViewModel.swift */,
 				BBB00015 /* PurgeViewModel.swift */,
+				BBB00040 /* OptimizerViewModel.swift */,
+				BBB00041 /* InstallerViewModel.swift */,
 			);
 			path = ViewModels;
 			sourceTree = "<group>";
@@ -213,6 +235,10 @@
 				BBB00019 /* DiskAnalyzer.swift */,
 				BBB00020 /* SystemMonitor.swift */,
 				BBB00021 /* TrashManager.swift */,
+				BBB00036 /* OrphanDetector.swift */,
+				BBB00037 /* InstallerScanner.swift */,
+				BBB00038 /* SystemOptimizer.swift */,
+				BBB00039 /* SecurityChecker.swift */,
 			);
 			path = Services;
 			sourceTree = "<group>";
@@ -225,6 +251,7 @@
 				BBB00024 /* DiskItem.swift */,
 				BBB00025 /* SystemStats.swift */,
 				BBB00026 /* ProjectArtifact.swift */,
+				BBB00042 /* InstallerItem.swift */,
 			);
 			path = Models;
 			sourceTree = "<group>";
@@ -269,6 +296,22 @@
 				BBB00010 /* SettingsView.swift */,
 			);
 			path = Settings;
+			sourceTree = "<group>";
+		};
+		DDD00018 /* Optimizer */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00043 /* OptimizerView.swift */,
+			);
+			path = Optimizer;
+			sourceTree = "<group>";
+		};
+		DDD00019 /* Installer */ = {
+			isa = PBXGroup;
+			children = (
+				BBB00044 /* InstallerView.swift */,
+			);
+			path = Installer;
 			sourceTree = "<group>";
 		};
 		DDD00099 /* Products */ = {
@@ -381,6 +424,15 @@
 				AAA00033 /* ViewModelContainer.swift in Sources */,
 				AAA00034 /* AppDelegate.swift in Sources */,
 				AAA00035 /* MenuBarController.swift in Sources */,
+				AAA00036 /* OrphanDetector.swift in Sources */,
+				AAA00037 /* InstallerScanner.swift in Sources */,
+				AAA00038 /* SystemOptimizer.swift in Sources */,
+				AAA00039 /* SecurityChecker.swift in Sources */,
+				AAA00040 /* OptimizerViewModel.swift in Sources */,
+				AAA00041 /* InstallerViewModel.swift in Sources */,
+				AAA00042 /* InstallerItem.swift in Sources */,
+				AAA00043 /* OptimizerView.swift in Sources */,
+				AAA00044 /* InstallerView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

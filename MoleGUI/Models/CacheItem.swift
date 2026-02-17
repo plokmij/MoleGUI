@@ -40,6 +40,9 @@ enum CacheCategory: String, CaseIterable, Identifiable {
     case userCache = "User Caches"
     case browserCache = "Browser Data"
     case applicationCache = "App Caches"
+    case codeEditorCache = "Code Editor Caches"
+    case devToolCache = "Developer Tools"
+    case shellCache = "Shell Data"
     case logs = "Logs"
     case downloads = "Downloads"
     case trash = "Trash"
@@ -47,6 +50,9 @@ enum CacheCategory: String, CaseIterable, Identifiable {
     case xcodeData = "Xcode Data"
     case dockerData = "Docker Data"
     case androidData = "Android Data"
+    case homebrewCache = "Homebrew"
+    case systemLevel = "System Maintenance"
+    case orphanedData = "Orphaned App Data"
 
     var id: String { rawValue }
 
@@ -56,6 +62,9 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .userCache: return "person"
         case .browserCache: return "globe"
         case .applicationCache: return "app.badge"
+        case .codeEditorCache: return "chevron.left.forwardslash.chevron.right"
+        case .devToolCache: return "wrench.and.screwdriver"
+        case .shellCache: return "terminal"
         case .logs: return "doc.text"
         case .downloads: return "arrow.down.circle"
         case .trash: return "trash"
@@ -63,6 +72,9 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .xcodeData: return "hammer"
         case .dockerData: return "shippingbox"
         case .androidData: return "cpu"
+        case .homebrewCache: return "mug"
+        case .systemLevel: return "wrench"
+        case .orphanedData: return "questionmark.folder"
         }
     }
 
@@ -72,6 +84,9 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .userCache: return "purple"
         case .browserCache: return "orange"
         case .applicationCache: return "green"
+        case .codeEditorCache: return "indigo"
+        case .devToolCache: return "brown"
+        case .shellCache: return "gray"
         case .logs: return "gray"
         case .downloads: return "cyan"
         case .trash: return "red"
@@ -79,6 +94,9 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .xcodeData: return "teal"
         case .dockerData: return "mint"
         case .androidData: return "green"
+        case .homebrewCache: return "orange"
+        case .systemLevel: return "red"
+        case .orphanedData: return "yellow"
         }
     }
 }

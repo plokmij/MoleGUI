@@ -21,7 +21,14 @@ enum Whitelist {
 
             // App critical data (expanded from home)
             "Library/Keychains",
-            "Library/Application Scripts"
+            "Library/Application Scripts",
+
+            // Security-sensitive app data
+            "Library/Application Support/1Password",
+            "Library/Application Support/Bitwarden",
+            "Library/Application Support/LastPass",
+            "Library/Application Support/KeePassXC",
+            "Library/Application Support/Dashlane",
         ]
     }
 
@@ -48,6 +55,17 @@ enum Whitelist {
         ]
     }
 
+    // Bundle identifiers whose orphaned data should never be cleaned
+    static var protectedOrphanBundleIds: Set<String> {
+        [
+            "com.agilebits.onepassword",
+            "com.bitwarden.desktop",
+            "com.lastpass.LastPass",
+            "org.keepassxc.keepassxc",
+            "com.dashlane.Dashlane",
+        ]
+    }
+
     static func isProtected(_ url: URL) -> Bool {
         let path = url.path
         let home = FileManager.default.homeDirectoryForCurrentUser.path
@@ -69,5 +87,9 @@ enum Whitelist {
 
     static func isProtectedCache(_ name: String) -> Bool {
         protectedCaches.contains { name.localizedCaseInsensitiveContains($0) }
+    }
+
+    static func isProtectedOrphan(_ bundleId: String) -> Bool {
+        protectedOrphanBundleIds.contains(bundleId)
     }
 }
