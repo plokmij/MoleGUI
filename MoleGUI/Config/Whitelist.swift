@@ -29,6 +29,16 @@ enum Whitelist {
             "Library/Application Support/LastPass",
             "Library/Application Support/KeePassXC",
             "Library/Application Support/Dashlane",
+
+            // Cloud storage — accidental deletion can cause data loss across devices
+            "~/Library/Mobile Documents",              // iCloud Drive
+            "~/Library/CloudStorage",                  // Dropbox, Google Drive, OneDrive mount points
+            "Library/Mobile Documents",
+            "Library/CloudStorage",
+            "Library/Application Support/CloudDocs",
+            "~/Dropbox",                               // Legacy Dropbox location
+            "~/Google Drive",                          // Legacy Google Drive
+            "~/OneDrive",                              // Legacy OneDrive
         ]
 
         // Load user-defined whitelist from config file

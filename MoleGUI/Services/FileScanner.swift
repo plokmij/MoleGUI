@@ -137,6 +137,12 @@ actor FileScanner {
             results[.applicationCache] = (results[.applicationCache] ?? []) + sandboxedItems
         }
 
+        // Add old macOS installers to system-level category
+        let installerItems = await scanOldMacOSInstallers()
+        if !installerItems.isEmpty {
+            results[.systemLevel] = (results[.systemLevel] ?? []) + installerItems
+        }
+
         let totalLocations = locations.count
         var scannedLocations = 0
 
@@ -178,7 +184,9 @@ actor FileScanner {
                         name: location.path.lastPathComponent,
                         size: size,
                         category: location.category,
-                        lastModified: try? FileManager.default.attributesOfItem(atPath: location.path.path)[.modificationDate] as? Date
+                        lastModified: try? FileManager.default.attributesOfItem(atPath: location.path.path)[.modificationDate] as? Date,
+                        requiresAdmin: location.requiresAdmin,
+                        riskLevel: location.riskLevel
                     )
 
                     if results[location.category] == nil {
@@ -286,7 +294,7 @@ actor FileScanner {
     }
 
     @discardableResult
-    private func runCommand(_ path: String, arguments: [String]) -> Bool {
+    private func runCommand(_ path: String, arguments: [String], timeout: TimeInterval = 120) -> Bool {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: path)
         process.arguments = arguments
@@ -295,7 +303,17 @@ actor FileScanner {
 
         do {
             try process.run()
-            process.waitUntilExit()
+
+            // Wait with timeout
+            let deadline = Date().addingTimeInterval(timeout)
+            while process.isRunning && Date() < deadline {
+                Thread.sleep(forTimeInterval: 0.5)
+            }
+            if process.isRunning {
+                process.terminate()
+                return false
+            }
+
             return process.terminationStatus == 0
         } catch {
             return false

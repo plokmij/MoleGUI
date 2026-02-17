@@ -1275,7 +1275,8 @@ enum CachePaths {
             CacheLocation(
                 path: URL(fileURLWithPath: "/Library/Logs/DiagnosticReports"),
                 category: .systemLevel,
-                description: "System crash reports"
+                description: "System crash reports",
+                requiresAdmin: true
             ),
             CacheLocation(
                 path: homeDirectory.appendingPathComponent("Library/Logs/DiagnosticReports"),
@@ -1285,51 +1286,61 @@ enum CachePaths {
             CacheLocation(
                 path: URL(fileURLWithPath: "/private/tmp"),
                 category: .systemLevel,
-                description: "System temporary files"
+                description: "System temporary files",
+                requiresAdmin: true
             ),
             CacheLocation(
                 path: URL(fileURLWithPath: "/private/var/tmp"),
                 category: .systemLevel,
-                description: "System variable temp files"
+                description: "System variable temp files",
+                requiresAdmin: true
             ),
             CacheLocation(
                 path: homeDirectory.appendingPathComponent("Library/Saved Application State"),
                 category: .systemLevel,
-                description: "App saved states"
+                description: "App saved states",
+                riskLevel: .medium
             ),
             // macOS Install Data
             CacheLocation(
                 path: URL(fileURLWithPath: "/macOS Install Data"),
                 category: .systemLevel,
-                description: "macOS install data (stale)"
+                description: "macOS install data (stale)",
+                requiresAdmin: true,
+                riskLevel: .medium
             ),
             // Code signing clone caches
             CacheLocation(
                 path: URL(fileURLWithPath: "/private/var/db/diagnostics"),
                 category: .systemLevel,
-                description: "System diagnostic database"
+                description: "System diagnostic database",
+                requiresAdmin: true
             ),
             CacheLocation(
                 path: URL(fileURLWithPath: "/private/var/db/DiagnosticPipeline"),
                 category: .systemLevel,
-                description: "Diagnostic pipeline data"
+                description: "Diagnostic pipeline data",
+                requiresAdmin: true
             ),
             CacheLocation(
                 path: URL(fileURLWithPath: "/private/var/db/reportmemoryexception"),
                 category: .systemLevel,
-                description: "Memory exception reports"
+                description: "Memory exception reports",
+                requiresAdmin: true
             ),
             // Simulator volumes
             CacheLocation(
                 path: URL(fileURLWithPath: "/Library/Developer/CoreSimulator/Volumes"),
                 category: .systemLevel,
-                description: "Simulator runtime volumes"
+                description: "Simulator runtime volumes",
+                requiresAdmin: true
             ),
             // Rosetta 2 cache (Apple Silicon only)
             CacheLocation(
                 path: URL(fileURLWithPath: "/Library/Apple/usr/share/rosetta"),
                 category: .systemLevel,
-                description: "Rosetta 2 cache"
+                description: "Rosetta 2 cache",
+                requiresAdmin: true
             ),
         ]
     }
@@ -1352,15 +1363,23 @@ struct CacheLocation: Identifiable {
     let category: CacheCategory
     let description: String
     let expandDevices: Bool
+    let requiresAdmin: Bool
+    let riskLevel: RiskLevel?
 
-    init(path: URL, category: CacheCategory, description: String, expandDevices: Bool = false) {
+    init(path: URL, category: CacheCategory, description: String, expandDevices: Bool = false, requiresAdmin: Bool = false, riskLevel: RiskLevel? = nil) {
         self.path = path
         self.category = category
         self.description = description
         self.expandDevices = expandDevices
+        self.requiresAdmin = requiresAdmin
+        self.riskLevel = riskLevel
     }
 
     var exists: Bool {
         FileManager.default.fileExists(atPath: path.path)
+    }
+
+    var effectiveRiskLevel: RiskLevel {
+        riskLevel ?? category.riskLevel
     }
 }

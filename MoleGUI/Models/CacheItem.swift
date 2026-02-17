@@ -1,5 +1,31 @@
 import Foundation
 
+enum RiskLevel: String, Comparable {
+    case low = "Low"
+    case medium = "Medium"
+    case high = "High"
+
+    var color: String {
+        switch self {
+        case .low: return "green"
+        case .medium: return "yellow"
+        case .high: return "red"
+        }
+    }
+
+    private var sortOrder: Int {
+        switch self {
+        case .low: return 0
+        case .medium: return 1
+        case .high: return 2
+        }
+    }
+
+    static func < (lhs: RiskLevel, rhs: RiskLevel) -> Bool {
+        lhs.sortOrder < rhs.sortOrder
+    }
+}
+
 struct CacheItem: Identifiable, Hashable {
     let id = UUID()
     let url: URL
@@ -10,12 +36,14 @@ struct CacheItem: Identifiable, Hashable {
     let isSelected: Bool
     let displayName: String?
     let subtitle: String?
+    let requiresAdmin: Bool
+    let riskLevel: RiskLevel
 
     var formattedSize: String {
         ByteFormatter.format(size)
     }
 
-    init(url: URL, name: String, size: Int64, category: CacheCategory, lastModified: Date? = nil, isSelected: Bool = true, displayName: String? = nil, subtitle: String? = nil) {
+    init(url: URL, name: String, size: Int64, category: CacheCategory, lastModified: Date? = nil, isSelected: Bool = true, displayName: String? = nil, subtitle: String? = nil, requiresAdmin: Bool = false, riskLevel: RiskLevel? = nil) {
         self.url = url
         self.name = name
         self.size = size
@@ -24,6 +52,8 @@ struct CacheItem: Identifiable, Hashable {
         self.isSelected = isSelected
         self.displayName = displayName
         self.subtitle = subtitle
+        self.requiresAdmin = requiresAdmin
+        self.riskLevel = riskLevel ?? category.riskLevel
     }
 
     func hash(into hasher: inout Hasher) {
@@ -97,6 +127,19 @@ enum CacheCategory: String, CaseIterable, Identifiable {
         case .homebrewCache: return "orange"
         case .systemLevel: return "red"
         case .orphanedData: return "yellow"
+        }
+    }
+
+    var riskLevel: RiskLevel {
+        switch self {
+        case .userCache, .browserCache, .applicationCache, .codeEditorCache,
+             .shellCache, .logs, .trash, .homebrewCache, .devToolCache:
+            return .low
+        case .downloads, .mailAttachments, .xcodeData, .dockerData,
+             .androidData, .orphanedData:
+            return .medium
+        case .systemCache, .systemLevel:
+            return .high
         }
     }
 }

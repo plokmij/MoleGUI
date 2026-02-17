@@ -58,13 +58,11 @@ actor CacheManager {
                 continue
             }
 
-            // Check if owning app is running
-            if skipRunningApps, let bundleId = extractBundleId(from: item.url.path) {
-                if runningBundleIds.contains(bundleId) {
-                    skippedRunning += 1
-                    await logger.log("SKIP-RUNNING", path: item.url.path)
-                    continue
-                }
+            // Check if owning app is running (bundle-ID and name-based matching)
+            if skipRunningApps && isAppRunning(for: item.url.path, runningBundleIds: runningBundleIds) {
+                skippedRunning += 1
+                await logger.log("SKIP-RUNNING", path: item.url.path)
+                continue
             }
 
             if dryRun {
@@ -125,6 +123,71 @@ actor CacheManager {
         await logger.log("PERMANENT-DELETE", path: url.path)
     }
 
+    /// Cleans items that require administrator privileges using AppleScript privilege escalation.
+    /// Uses `osascript -e 'do shell script "rm -rf ..." with administrator privileges'`
+    func cleanWithPrivileges(_ items: [CacheItem], dryRun: Bool = false) async throws -> CleanResult {
+        var deletedCount = 0
+        var deletedSize: Int64 = 0
+        var errors: [CleanError] = []
+
+        let adminItems = items.filter { $0.isSelected && $0.requiresAdmin }
+        guard !adminItems.isEmpty else {
+            return CleanResult(deletedCount: 0, deletedSize: 0, errors: [], skippedRunning: 0)
+        }
+
+        if dryRun {
+            for item in adminItems {
+                deletedCount += 1
+                deletedSize += item.size
+                await logger.log("DRY-RUN-ADMIN", path: item.url.path, size: item.size)
+            }
+            return CleanResult(deletedCount: deletedCount, deletedSize: deletedSize, errors: [], skippedRunning: 0)
+        }
+
+        // Process in batches to avoid overly long shell commands
+        let batchSize = 10
+        for batch in stride(from: 0, to: adminItems.count, by: batchSize) {
+            let end = min(batch + batchSize, adminItems.count)
+            let batchItems = Array(adminItems[batch..<end])
+            let batchPaths = batchItems.map { item in
+                "'\(item.url.path.replacingOccurrences(of: "'", with: "'\\''"))'"
+            }
+            let rmCommand = "rm -rf " + batchPaths.joined(separator: " ")
+
+            let script = "do shell script \"\(rmCommand.replacingOccurrences(of: "\"", with: "\\\""))\" with administrator privileges"
+
+            let process = Process()
+            process.executableURL = URL(fileURLWithPath: "/usr/bin/osascript")
+            process.arguments = ["-e", script]
+            process.standardOutput = FileHandle.nullDevice
+            process.standardError = FileHandle.nullDevice
+
+            do {
+                try process.run()
+                process.waitUntilExit()
+
+                if process.terminationStatus == 0 {
+                    for item in batchItems {
+                        deletedCount += 1
+                        deletedSize += item.size
+                        await logger.log("DELETE-ADMIN", path: item.url.path, size: item.size)
+                    }
+                } else {
+                    for item in batchItems {
+                        errors.append(.accessDenied(item.url))
+                        await logger.log("DELETE-ADMIN", path: item.url.path, success: false)
+                    }
+                }
+            } catch {
+                for item in batchItems {
+                    errors.append(.deletionFailed(item.url, error))
+                }
+            }
+        }
+
+        return CleanResult(deletedCount: deletedCount, deletedSize: deletedSize, errors: errors, skippedRunning: 0)
+    }
+
     func emptyTrash() async throws -> Int64 {
         let trashURL = fileManager.homeDirectoryForCurrentUser.appendingPathComponent(".Trash")
 
@@ -149,10 +212,84 @@ actor CacheManager {
 
     // MARK: - Running App Detection
 
+    /// Maps cache folder names to bundle identifiers for apps whose cache paths
+    /// don't follow the reverse-DNS convention
+    private static let knownAppMappings: [String: String] = [
+        // Browsers
+        "Google/Chrome": "com.google.Chrome",
+        "Google": "com.google.Chrome",
+        "Firefox": "org.mozilla.firefox",
+        "Microsoft Edge": "com.microsoft.edgemac",
+        "Safari": "com.apple.Safari",
+        "BraveSoftware": "com.brave.Browser",
+
+        // Communication
+        "Slack": "com.tinyspeck.slackmacgap",
+        "discord": "com.hnc.Discord",
+        "Discord": "com.hnc.Discord",
+        "Telegram Desktop": "ru.keepcoder.Telegram",
+        "WhatsApp": "net.whatsapp.WhatsApp",
+        "Skype": "com.skype.skype",
+        "zoom.us": "us.zoom.xos",
+
+        // Productivity
+        "Spotify": "com.spotify.client",
+        "Notion": "notion.id",
+
+        // Dev tools
+        "Code": "com.microsoft.VSCode",
+        "Cursor": "com.todesktop.230313mzl4w4u92",
+        "Sublime Text": "com.sublimetext.4",
+        "Zed": "dev.zed.Zed",
+
+        // Design
+        "Figma": "com.figma.Desktop",
+        "Sketch": "com.bohemiancoding.sketch3",
+
+        // Apple apps
+        "Mail Downloads": "com.apple.mail",
+        "FinalCut": "com.apple.FinalCut",
+
+        // Adobe
+        "Adobe": "com.adobe.cc.ui",
+
+        // Media
+        "Steam": "com.valvesoftware.steam",
+        "Blender": "org.blenderfoundation.blender",
+    ]
+
     private func getRunningAppBundleIds() async -> Set<String> {
         await MainActor.run {
             Set(NSWorkspace.shared.runningApplications.compactMap { $0.bundleIdentifier })
         }
+    }
+
+    /// Checks if the app owning the given cache path is currently running
+    private func isAppRunning(for path: String, runningBundleIds: Set<String>) -> Bool {
+        // Try reverse-DNS bundle ID extraction first
+        if let bundleId = extractBundleId(from: path) {
+            if runningBundleIds.contains(bundleId) {
+                return true
+            }
+        }
+
+        // Fall back to name-based matching via knownAppMappings
+        let components = path.components(separatedBy: "/")
+        for (folderName, bundleId) in Self.knownAppMappings {
+            // Check if the folder name appears as a path component (or as adjacent components for "Google/Chrome")
+            if folderName.contains("/") {
+                // Multi-component match (e.g., "Google/Chrome")
+                if path.contains(folderName) && runningBundleIds.contains(bundleId) {
+                    return true
+                }
+            } else {
+                if components.contains(folderName) && runningBundleIds.contains(bundleId) {
+                    return true
+                }
+            }
+        }
+
+        return false
     }
 
     /// Extracts a likely bundle ID from a cache path like ~/Library/Caches/com.example.app

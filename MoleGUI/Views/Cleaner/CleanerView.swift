@@ -93,7 +93,10 @@ struct CleanerView: View {
             }
         } message: {
             if let result = viewModel.cleanResult {
-                Text("Would remove \(result.deletedCount) items (\(ByteFormatter.format(result.deletedSize)))")
+                let base = "Would remove \(result.deletedCount) items (\(ByteFormatter.format(result.deletedSize)))"
+                let skipped = result.skippedRunning > 0 ? "\nSkipped \(result.skippedRunning) items (apps running)" : ""
+                let brew = viewModel.brewCleanupResult.map { "\n\($0)" } ?? ""
+                Text(base + skipped + brew)
             }
         }
         .alert("Error", isPresented: .constant(viewModel.error != nil)) {
@@ -221,6 +224,8 @@ struct CategoryRow: View {
                 Text(categoryResult.category.rawValue)
                     .fontWeight(.medium)
 
+                RiskBadge(level: categoryResult.category.riskLevel)
+
                 Spacer()
 
                 Text(ByteFormatter.format(selectedSize))
@@ -253,8 +258,8 @@ struct ItemRow: View {
                 .foregroundStyle(.secondary)
 
             VStack(alignment: .leading, spacing: 2) {
-                if let displayName = item.displayName {
-                    HStack(spacing: 6) {
+                HStack(spacing: 6) {
+                    if let displayName = item.displayName {
                         Text(displayName)
                             .lineLimit(1)
                         if let subtitle = item.subtitle {
@@ -262,10 +267,19 @@ struct ItemRow: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
+                    } else {
+                        Text(item.name)
+                            .lineLimit(1)
                     }
-                } else {
-                    Text(item.name)
-                        .lineLimit(1)
+
+                    RiskBadge(level: item.riskLevel)
+
+                    if item.requiresAdmin {
+                        Image(systemName: "lock.shield")
+                            .font(.caption)
+                            .foregroundStyle(.orange)
+                            .help("Requires administrator privileges to clean")
+                    }
                 }
 
                 Text(item.url.path)
@@ -280,6 +294,25 @@ struct ItemRow: View {
                 .foregroundStyle(isSelected ? .primary : .secondary)
         }
         .padding(.vertical, 2)
+    }
+}
+
+struct RiskBadge: View {
+    let level: RiskLevel
+
+    var body: some View {
+        Circle()
+            .fill(riskColor)
+            .frame(width: 8, height: 8)
+            .help("\(level.rawValue) risk")
+    }
+
+    private var riskColor: Color {
+        switch level {
+        case .low: return .green
+        case .medium: return .yellow
+        case .high: return .red
+        }
     }
 }
 

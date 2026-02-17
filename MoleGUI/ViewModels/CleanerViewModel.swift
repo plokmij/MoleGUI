@@ -10,6 +10,7 @@ class CleanerViewModel: ObservableObject {
     @Published var selectedItems: Set<UUID> = []
     @Published var isCleaning = false
     @Published var cleanResult: CacheManager.CleanResult?
+    @Published var brewCleanupResult: String?
     @Published var error: String?
 
     private let scanner = FileScanner()
@@ -125,15 +126,48 @@ class CleanerViewModel: ObservableObject {
 
         isCleaning = true
         error = nil
+        brewCleanupResult = nil
 
         // Get all selected items
-        let itemsToClean = results.flatMap { $0.items }
+        let allItemsToClean = results.flatMap { $0.items }
             .filter { selectedItems.contains($0.id) }
+
+        // Split into regular and admin-required items
+        let regularItems = allItemsToClean.filter { !$0.requiresAdmin }
+        let adminItems = allItemsToClean.filter { $0.requiresAdmin }
+
+        // Check if any Homebrew items are selected
+        let hasHomebrewItems = allItemsToClean.contains { $0.category == .homebrewCache }
 
         Task {
             do {
-                let result = try await cacheManager.cleanItems(itemsToClean, dryRun: dryRun)
-                self.cleanResult = result
+                // Clean regular items
+                let result = try await cacheManager.cleanItems(regularItems, dryRun: dryRun)
+
+                // Clean admin items with privilege escalation
+                var adminResult: CacheManager.CleanResult?
+                if !adminItems.isEmpty {
+                    adminResult = try await cacheManager.cleanWithPrivileges(adminItems, dryRun: dryRun)
+                }
+
+                // Merge results
+                let totalDeleted = result.deletedCount + (adminResult?.deletedCount ?? 0)
+                let totalSize = result.deletedSize + (adminResult?.deletedSize ?? 0)
+                let allErrors = result.errors + (adminResult?.errors ?? [])
+                let totalSkipped = result.skippedRunning + (adminResult?.skippedRunning ?? 0)
+
+                self.cleanResult = CacheManager.CleanResult(
+                    deletedCount: totalDeleted,
+                    deletedSize: totalSize,
+                    errors: allErrors,
+                    skippedRunning: totalSkipped
+                )
+
+                // Run brew cleanup if Homebrew items were selected and not dry run
+                if hasHomebrewItems && !dryRun {
+                    let brewResult = await scanner.runBrewCleanup()
+                    self.brewCleanupResult = brewResult.message
+                }
 
                 if !dryRun {
                     // Refresh scan results after cleaning
