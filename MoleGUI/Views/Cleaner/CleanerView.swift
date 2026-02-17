@@ -75,7 +75,7 @@ struct CleanerView: View {
                         .disabled(!viewModel.hasAnySelection)
                     }
 
-                    Button("Clean") {
+                    Button("Clean", role: .destructive) {
                         viewModel.clean(dryRun: false)
                     }
                     .disabled(!viewModel.hasAnySelection || viewModel.isCleaning)
@@ -88,7 +88,7 @@ struct CleanerView: View {
         }
         .alert("Dry Run Result", isPresented: $showDryRunResult) {
             Button("OK", role: .cancel) {}
-            Button("Clean Now") {
+            Button("Clean Now", role: .destructive) {
                 viewModel.clean(dryRun: false)
             }
         } message: {

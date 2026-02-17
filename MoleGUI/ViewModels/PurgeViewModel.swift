@@ -10,6 +10,7 @@ class PurgeViewModel: ObservableObject {
     @Published var groupedArtifacts: [ProjectGroup] = []
     @Published var selectedArtifacts: Set<UUID> = []
     @Published var isPurging = false
+    @Published var showPurgeConfirmation = false
     @Published var error: String?
     @Published var scanDirectory: URL?
 
