@@ -22,21 +22,36 @@ class SystemMonitor: ObservableObject {
         guard !isMonitoring else { return }
         isMonitoring = true
 
-        // Load static hardware info once
+        // Load static hardware info once (off main thread for system_profiler)
         if !hardwareInfoLoaded {
-            loadHardwareInfo()
             hardwareInfoLoaded = true
+            Task.detached { [weak self] in
+                let gpu = Self.getGPUNameAsync()
+                await self?.applyHardwareInfo(gpuName: gpu)
+            }
+            // Load non-blocking hardware info immediately
+            stats.macModel = getModelName()
+            stats.chipName = getChipName()
+            stats.totalRAM = ByteFormatter.format(Int64(Foundation.ProcessInfo.processInfo.physicalMemory))
+            let v = Foundation.ProcessInfo.processInfo.operatingSystemVersion
+            stats.osVersion = "macOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
         }
 
-        // Initial update
-        updateStats()
+        // Initial update (non-blocking parts only, shell commands run async)
+        updateStatsNonBlocking()
+        scheduleAsyncStats()
 
         // Update every second
         timer = Timer.publish(every: 1.0, on: .main, in: .common)
             .autoconnect()
             .sink { [weak self] _ in
-                self?.updateStats()
+                self?.updateStatsNonBlocking()
+                self?.scheduleAsyncStats()
             }
+    }
+
+    private func applyHardwareInfo(gpuName: String) {
+        stats.gpuName = gpuName
     }
 
     func stopMonitoring() {
@@ -48,7 +63,8 @@ class SystemMonitor: ObservableObject {
     private var previousDiskReadBytes: Int64 = 0
     private var previousDiskWriteBytes: Int64 = 0
 
-    private func updateStats() {
+    /// Updates stats that use only Mach/IOKit/sysctl (no shell commands) — safe on main thread
+    private func updateStatsNonBlocking() {
         let (totalCPU, perCore) = getCPUUsage()
         stats.cpuUsage = totalCPU
         stats.perCoreCPU = perCore
@@ -56,7 +72,7 @@ class SystemMonitor: ObservableObject {
         stats.uptime = getUptime()
         stats.cpuLoadAverage = getLoadAverage()
 
-        // Battery
+        // Battery (IOKit — fast)
         let batteryInfo = getBatteryInfo()
         stats.batteryLevel = batteryInfo.level
         stats.isCharging = batteryInfo.isCharging
@@ -67,7 +83,7 @@ class SystemMonitor: ObservableObject {
         stats.batteryTimeRemaining = batteryInfo.timeRemaining
         stats.batteryMaxCapacity = batteryInfo.maxCapacity
 
-        // Network stats
+        // Network stats (getifaddrs — fast)
         let (netIn, netOut) = getNetworkBytes()
         if previousNetworkIn > 0 {
             stats.networkDownSpeed = netIn - previousNetworkIn
@@ -76,36 +92,6 @@ class SystemMonitor: ObservableObject {
         previousNetworkIn = netIn
         previousNetworkOut = netOut
 
-        // Disk I/O rates
-        let (diskRead, diskWrite) = getDiskIOBytes()
-        if previousDiskReadBytes > 0 {
-            stats.diskReadSpeed = max(0, diskRead - previousDiskReadBytes)
-            stats.diskWriteSpeed = max(0, diskWrite - previousDiskWriteBytes)
-        }
-        previousDiskReadBytes = diskRead
-        previousDiskWriteBytes = diskWrite
-
-        // Fan speed and temperature (update every 3 seconds)
-        if Int(stats.uptime) % 3 == 0 {
-            let thermals = getThermalInfo()
-            stats.fanRPM = thermals.fanSpeeds
-            stats.fanCount = thermals.fanSpeeds.count
-            stats.cpuTemperature = thermals.cpuTemp
-        }
-
-        // Memory pressure (update every 5 seconds)
-        if Int(stats.uptime) % 5 == 0 {
-            stats.memoryPressureLevel = getMemoryPressure()
-            let swapInfo = getSwapInfo()
-            stats.swapUsedMB = swapInfo.used
-            stats.swapTotalMB = swapInfo.total
-        }
-
-        // Top processes (update every 5 seconds to reduce overhead)
-        if Int(stats.uptime) % 5 == 0 {
-            stats.topProcesses = getTopProcesses()
-        }
-
         // Update histories
         cpuHistory.addSample(stats.cpuUsage)
         memoryHistory.addSample(stats.memoryUsage)
@@ -113,16 +99,72 @@ class SystemMonitor: ObservableObject {
         diskIOHistory.addSample(read: stats.diskReadSpeed, write: stats.diskWriteSpeed)
     }
 
-    // MARK: - Hardware Info (static, loaded once)
+    /// Runs shell-based stats off the main thread and publishes results back
+    private func scheduleAsyncStats() {
+        let uptime = stats.uptime
+        let prevDiskRead = previousDiskReadBytes
+        let prevDiskWrite = previousDiskWriteBytes
 
-    private func loadHardwareInfo() {
-        stats.macModel = getModelName()
-        stats.chipName = getChipName()
-        stats.totalRAM = ByteFormatter.format(Int64(Foundation.ProcessInfo.processInfo.physicalMemory))
-        stats.gpuName = getGPUName()
-        let v = Foundation.ProcessInfo.processInfo.operatingSystemVersion
-        stats.osVersion = "macOS \(v.majorVersion).\(v.minorVersion).\(v.patchVersion)"
+        Task.detached { [weak self] in
+            // Disk I/O (iostat) — every tick
+            let (diskRead, diskWrite) = Self.getDiskIOBytesAsync()
+
+            // Thermals — every 3 seconds
+            var thermals: SystemMonitor.ThermalInfo?
+            if Int(uptime) % 3 == 0 {
+                thermals = Self.getThermalInfoAsync()
+            }
+
+            // Memory pressure, swap, top processes — every 5 seconds
+            var memPressure: String?
+            var swapInfo: (used: Int64, total: Int64)?
+            var topProcs: [TopProcess]?
+            if Int(uptime) % 5 == 0 {
+                memPressure = Self.getMemoryPressureAsync()
+                swapInfo = Self.getSwapInfoAsync()
+                topProcs = Self.getTopProcessesAsync()
+            }
+
+            await self?.applyAsyncStats(
+                diskRead: diskRead, diskWrite: diskWrite,
+                prevDiskRead: prevDiskRead, prevDiskWrite: prevDiskWrite,
+                thermals: thermals, memPressure: memPressure,
+                swapInfo: swapInfo, topProcs: topProcs
+            )
+        }
     }
+
+    private func applyAsyncStats(
+        diskRead: Int64, diskWrite: Int64,
+        prevDiskRead: Int64, prevDiskWrite: Int64,
+        thermals: ThermalInfo?, memPressure: String?,
+        swapInfo: (used: Int64, total: Int64)?, topProcs: [TopProcess]?
+    ) {
+        if prevDiskRead > 0 {
+            stats.diskReadSpeed = max(0, diskRead - prevDiskRead)
+            stats.diskWriteSpeed = max(0, diskWrite - prevDiskWrite)
+        }
+        previousDiskReadBytes = diskRead
+        previousDiskWriteBytes = diskWrite
+
+        if let thermals = thermals {
+            stats.fanRPM = thermals.fanSpeeds
+            stats.fanCount = thermals.fanSpeeds.count
+            stats.cpuTemperature = thermals.cpuTemp
+        }
+        if let memPressure = memPressure {
+            stats.memoryPressureLevel = memPressure
+        }
+        if let swapInfo = swapInfo {
+            stats.swapUsedMB = swapInfo.used
+            stats.swapTotalMB = swapInfo.total
+        }
+        if let topProcs = topProcs {
+            stats.topProcesses = topProcs
+        }
+    }
+
+    // MARK: - Hardware Info (static, loaded once)
 
     private func getModelName() -> String {
         var size = 0
@@ -145,7 +187,8 @@ class SystemMonitor: ObservableObject {
         #endif
     }
 
-    private func getGPUName() -> String {
+    /// Runs system_profiler off the main thread
+    private nonisolated static func getGPUNameAsync() -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/system_profiler")
         process.arguments = ["SPDisplaysDataType", "-detailLevel", "mini"]
@@ -318,20 +361,20 @@ class SystemMonitor: ObservableObject {
         if service != IO_OBJECT_NULL {
             defer { IOObjectRelease(service) }
 
-            if let cycleCount = getIORegistryValue(service: service, key: "CycleCount") as? Int {
+            if let cycleCount = Self.getIORegistryValue(service: service, key: "CycleCount") as? Int {
                 info.cycleCount = cycleCount
             }
-            if let temp = getIORegistryValue(service: service, key: "Temperature") as? Int {
+            if let temp = Self.getIORegistryValue(service: service, key: "Temperature") as? Int {
                 info.temperature = Double(temp) / 100.0
             }
-            if let condition = getIORegistryValue(service: service, key: "BatteryHealthCondition") as? String {
+            if let condition = Self.getIORegistryValue(service: service, key: "BatteryHealthCondition") as? String {
                 info.condition = condition
             } else {
                 info.condition = "Normal"
             }
             // Max capacity / design capacity for health percentage
-            if let maxCap = getIORegistryValue(service: service, key: "MaxCapacity") as? Int,
-               let designCap = getIORegistryValue(service: service, key: "DesignCapacity") as? Int,
+            if let maxCap = Self.getIORegistryValue(service: service, key: "MaxCapacity") as? Int,
+               let designCap = Self.getIORegistryValue(service: service, key: "DesignCapacity") as? Int,
                designCap > 0 {
                 info.maxCapacity = min(100, (maxCap * 100) / designCap)
             }
@@ -340,7 +383,7 @@ class SystemMonitor: ObservableObject {
         return info
     }
 
-    private func getIORegistryValue(service: io_service_t, key: String) -> Any? {
+    private nonisolated static func getIORegistryValue(service: io_service_t, key: String) -> Any? {
         IORegistryEntryCreateCFProperty(service, key as CFString, kCFAllocatorDefault, 0)?.takeRetainedValue()
     }
 
@@ -379,7 +422,7 @@ class SystemMonitor: ObservableObject {
 
     // MARK: - Disk I/O
 
-    private func getDiskIOBytes() -> (read: Int64, write: Int64) {
+    private nonisolated static func getDiskIOBytesAsync() -> (read: Int64, write: Int64) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/iostat")
         process.arguments = ["-d", "-c", "1", "-K"]
@@ -417,7 +460,7 @@ class SystemMonitor: ObservableObject {
         var fanSpeeds: [Int] = []
     }
 
-    private func getThermalInfo() -> ThermalInfo {
+    private nonisolated static func getThermalInfoAsync() -> ThermalInfo {
         var info = ThermalInfo()
 
         // Try to get fan speed from IOKit
@@ -428,7 +471,7 @@ class SystemMonitor: ObservableObject {
                 var service = IOIteratorNext(iterator)
                 while service != IO_OBJECT_NULL {
                     // Try to read fan speeds
-                    if let fanSpeed = getIORegistryValue(service: service, key: "FanSpeed") as? [Int] {
+                    if let fanSpeed = Self.getIORegistryValue(service: service, key: "FanSpeed") as? [Int] {
                         info.fanSpeeds = fanSpeed
                     }
                     IOObjectRelease(service)
@@ -471,7 +514,7 @@ class SystemMonitor: ObservableObject {
 
     // MARK: - Memory Pressure
 
-    private func getMemoryPressure() -> String {
+    private nonisolated static func getMemoryPressureAsync() -> String {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/bin/memory_pressure")
         process.arguments = ["-Q"]
@@ -495,7 +538,7 @@ class SystemMonitor: ObservableObject {
 
     // MARK: - Swap Info
 
-    private func getSwapInfo() -> (used: Int64, total: Int64) {
+    private nonisolated static func getSwapInfoAsync() -> (used: Int64, total: Int64) {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/usr/sbin/sysctl")
         process.arguments = ["vm.swapusage"]
@@ -534,7 +577,7 @@ class SystemMonitor: ObservableObject {
 
     // MARK: - Top Processes
 
-    private func getTopProcesses() -> [TopProcess] {
+    private nonisolated static func getTopProcessesAsync() -> [TopProcess] {
         let process = Process()
         process.executableURL = URL(fileURLWithPath: "/bin/ps")
         process.arguments = ["aux"]
